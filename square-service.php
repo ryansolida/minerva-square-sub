@@ -69,8 +69,6 @@ function square_service_check_subscription_on_login($user_login, $user) {
 // Hook into WordPress login to verify subscription status
 add_action('wp_login', 'square_service_check_subscription_on_login', 10, 2);
 
-// Load the demo shortcode
-require_once plugin_dir_path(__FILE__) . 'includes/demo-shortcode.php';
 
 // Main plugin class
 class SquareServicePlugin {
@@ -90,8 +88,6 @@ class SquareServicePlugin {
     }
     
     public function init() {
-        // Initialize shortcodes
-        square_service_shortcodes();
         
         // Add settings page
         if (is_admin()) {

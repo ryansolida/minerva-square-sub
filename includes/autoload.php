@@ -18,8 +18,5 @@ require_once __DIR__ . '/vendor/square/autoload.php';
 // Load the SquareService class
 require_once __DIR__ . '/SquareService.php';
 
-// Load ShortcodeHandlers class
-require_once __DIR__ . '/ShortcodeHandlers.php';
-
 // Load UserFunctions class
 require_once __DIR__ . '/UserFunctions.php';
