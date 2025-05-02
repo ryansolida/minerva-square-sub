@@ -23,6 +23,19 @@ require_once plugin_dir_path(__FILE__) . 'includes/square-membership-status-alpi
 require_once plugin_dir_path(__FILE__) . 'admin/settings.php';
 
 /**
+ * Enqueue Tailwind CSS from CDN
+ */
+function square_service_enqueue_tailwind() {
+    wp_enqueue_style(
+        'tailwindcss',
+        'https://cdn.tailwindcss.com',
+        array(),
+        null
+    );
+}
+add_action('wp_enqueue_scripts', 'square_service_enqueue_tailwind');
+
+/**
  * Check user's Square subscription status on login and sync with WordPress
  *
  * @param string $user_login The user's login name

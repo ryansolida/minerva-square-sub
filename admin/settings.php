@@ -163,6 +163,15 @@ class SquareServiceSettings {
                 'default' => 'sandbox'
             )
         );
+        
+        register_setting(
+            'square_service', 
+            'square_service_default_plan_id', 
+            array(
+                'sanitize_callback' => 'sanitize_text_field'
+            )
+        );
+        
         add_settings_section(
             'square_service_section', 
             'API Configuration', 
@@ -182,6 +191,14 @@ class SquareServiceSettings {
             'square_service_application_id', 
             'Application ID', 
             array($this, 'application_id_callback'), 
+            'square_service', 
+            'square_service_section'
+        );
+        
+        add_settings_field(
+            'square_service_default_plan_id', 
+            'Default Subscription Plan ID', 
+            array($this, 'default_plan_id_callback'), 
             'square_service', 
             'square_service_section'
         );
@@ -223,9 +240,18 @@ class SquareServiceSettings {
      * Application ID field
      */
     public function application_id_callback() {
-        $value = get_option('square_service_application_id');
-        echo '<input type="text" class="regular-text" name="square_service_application_id" value="' . esc_attr($value) . '">';
-        echo '<p class="description">Your Square application ID (required for Web Payments SDK)</p>';
+        $application_id = get_option('square_service_application_id');
+        echo '<input type="text" id="square_service_application_id" name="square_service_application_id" value="' . esc_attr($application_id) . '" class="regular-text">';
+        echo '<p class="description">Your Square Application ID. Required for the Square Web Payments SDK.</p>';
+    }
+    
+    /**
+     * Default Plan ID field
+     */
+    public function default_plan_id_callback() {
+        $plan_id = get_option('square_service_default_plan_id');
+        echo '<input type="text" id="square_service_default_plan_id" name="square_service_default_plan_id" value="' . esc_attr($plan_id) . '" class="regular-text">';
+        echo '<p class="description">Your default Square subscription plan ID. Will be used when no plan_id is specified in the shortcode.</p>';
     }
     
     /**

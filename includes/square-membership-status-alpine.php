@@ -46,170 +46,8 @@ class SquareMembershipStatusAlpine {
         // Enqueue Alpine.js from CDN
         wp_enqueue_script('alpinejs', 'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js', array(), null, true);
         
-        // Add inline styles
-        wp_add_inline_style('wp-block-library', $this->get_inline_css());
-    }
-    
-    /**
-     * Get inline CSS for the status display
-     */
-    private function get_inline_css() {
-        return '
-            .square-alpine-status {
-                max-width: 600px;
-                margin: 20px 0;
-                padding: 20px;
-                background-color: #f9f9f9;
-                border-radius: 5px;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-            }
-            
-            .square-alpine-status h3 {
-                margin-top: 0;
-                color: #333;
-                font-size: 1.5em;
-                margin-bottom: 15px;
-            }
-            
-            .square-alpine-status-section {
-                margin-bottom: 20px;
-                padding-bottom: 15px;
-                border-bottom: 1px solid #eee;
-            }
-            
-            .square-alpine-status-section:last-child {
-                border-bottom: none;
-                margin-bottom: 0;
-                padding-bottom: 0;
-            }
-            
-            .square-alpine-status-section h4 {
-                margin-top: 0;
-                color: #555;
-                font-size: 1.2em;
-            }
-            
-            .square-alpine-status-detail {
-                display: flex;
-                margin-bottom: 8px;
-            }
-            
-            .square-alpine-detail-label {
-                font-weight: bold;
-                width: 140px;
-                color: #666;
-                flex-shrink: 0;
-            }
-            
-            .square-alpine-detail-value {
-                color: #333;
-            }
-            
-            .square-alpine-status-active {
-                color: #4CAF50;
-                font-weight: bold;
-            }
-            
-            .square-alpine-status-inactive {
-                color: #F44336;
-                font-weight: bold;
-            }
-            
-            .square-alpine-button {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                padding: 10px 15px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-                transition: background-color 0.3s;
-            }
-            
-            .square-alpine-button:hover {
-                background-color: #45a049;
-            }
-            
-            .square-alpine-button.cancel {
-                background-color: #F44336;
-            }
-            
-            .square-alpine-button.cancel:hover {
-                background-color: #d32f2f;
-            }
-            
-            .square-alpine-button:disabled {
-                background-color: #cccccc;
-                cursor: not-allowed;
-            }
-            
-            .square-alpine-loading {
-                display: inline-block;
-                width: 20px;
-                height: 20px;
-                border: 3px solid rgba(255, 255, 255, 0.3);
-                border-radius: 50%;
-                border-top-color: white;
-                animation: spin 1s ease-in-out infinite;
-                margin-right: 10px;
-                vertical-align: middle;
-            }
-            
-            .square-alpine-message {
-                margin-top: 15px;
-                padding: 10px;
-                border-radius: 4px;
-            }
-            
-            .square-alpine-message.success {
-                background-color: #E8F5E9;
-                color: #388E3C;
-                border: 1px solid #C8E6C9;
-            }
-            
-            .square-alpine-message.error {
-                background-color: #FFEBEE;
-                color: #D32F2F;
-                border: 1px solid #FFCDD2;
-            }
-            
-            .square-alpine-confirmation {
-                margin-top: 15px;
-                padding: 15px;
-                background-color: #FFF8E1;
-                border: 1px solid #FFE082;
-                border-radius: 4px;
-            }
-            
-            .square-alpine-confirmation-actions {
-                margin-top: 10px;
-                display: flex;
-                gap: 10px;
-            }
-            
-            .square-alpine-card {
-                background-color: white;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                padding: 15px;
-                margin-bottom: 15px;
-            }
-            
-            .square-alpine-card-brand {
-                font-weight: bold;
-                margin-right: 10px;
-            }
-            
-            .square-alpine-card-expiry {
-                color: #666;
-                font-size: 0.9em;
-            }
-            
-            @keyframes spin {
-                to { transform: rotate(360deg); }
-            }
-        ';
+        // Enqueue Tailwind CSS
+        wp_enqueue_style('tailwindcss', 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css', array(), null);
     }
     
     /**
@@ -323,7 +161,7 @@ class SquareMembershipStatusAlpine {
         
         // Check if user is logged in
         if (!is_user_logged_in()) {
-            return '<div class="square-alpine-status-error">Please <a href="' . wp_login_url(get_permalink()) . '">log in</a> to view membership status.</div>';
+            return '<div class="text-red-600 font-semibold">Please <a href="' . wp_login_url(get_permalink()) . '">log in</a> to view membership status.</div>';
         }
         
         // Get subscription data
@@ -345,7 +183,7 @@ class SquareMembershipStatusAlpine {
         ?>
         <div 
             id="<?php echo esc_attr($container_id); ?>" 
-            class="square-alpine-status" 
+            class="max-w-lg mx-auto my-6 p-6 bg-white rounded-lg shadow-md" 
             x-data="membershipStatus({
                 subscriptionId: '<?php echo esc_js($has_subscription ? $subscription['id'] : ''); ?>',
                 isActive: <?php echo $is_active ? 'true' : 'false'; ?>,
@@ -355,42 +193,42 @@ class SquareMembershipStatusAlpine {
                 paymentMethodsUrl: '<?php echo esc_js($atts['payment_methods_url']); ?>'
             })"
         >
-            <h3><?php echo esc_html($atts['title']); ?></h3>
+            <h3 class="text-xl font-semibold text-gray-800 mb-4"><?php echo esc_html($atts['title']); ?></h3>
             
             <!-- Subscription Status -->
-            <div class="square-alpine-status-section">
-                <h4>Subscription Status</h4>
+            <div class="mb-6 pb-6 border-b border-gray-200 last:border-b-0">
+                <h4 class="text-lg font-medium text-gray-700 mb-3">Subscription Status</h4>
                 
                 <?php if ($has_subscription): ?>
-                    <div class="square-alpine-status-detail">
-                        <div class="square-alpine-detail-label">Status:</div>
-                        <div class="square-alpine-detail-value">
-                            <span class="<?php echo $is_active ? 'square-alpine-status-active' : 'square-alpine-status-inactive'; ?>">
+                    <div class="flex mb-2">
+                        <div class="font-medium w-32 text-gray-600 flex-shrink-0">Status:</div>
+                        <div class="text-gray-800">
+                            <span class="<?php echo $is_active ? 'text-green-600' : 'text-red-600'; ?>">
                                 <?php echo $is_active ? 'Active' : 'Inactive'; ?>
                             </span>
                         </div>
                     </div>
                     
                     <?php if (!empty($subscription['start_date'])): ?>
-                    <div class="square-alpine-status-detail">
-                        <div class="square-alpine-detail-label">Start Date:</div>
-                        <div class="square-alpine-detail-value">
+                    <div class="flex mb-2">
+                        <div class="font-medium w-32 text-gray-600 flex-shrink-0">Start Date:</div>
+                        <div class="text-gray-800">
                             <?php echo esc_html($this->format_date($subscription['start_date'])); ?>
                         </div>
                     </div>
                     <?php endif; ?>
                     
-                    <div class="square-alpine-status-detail">
-                        <div class="square-alpine-detail-label">Subscription ID:</div>
-                        <div class="square-alpine-detail-value">
+                    <div class="flex mb-2">
+                        <div class="font-medium w-32 text-gray-600 flex-shrink-0">Subscription ID:</div>
+                        <div class="text-gray-800">
                             <?php echo esc_html($subscription['id']); ?>
                         </div>
                     </div>
                     
                     <!-- Cancelation Actions -->
-                    <div style="margin-top: 15px;" x-show="isActive">
+                    <div class="mt-4" x-show="isActive">
                         <button 
-                            class="square-alpine-button cancel" 
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors duration-200" 
                             @click="showCancelConfirmation = true"
                             x-show="!showCancelConfirmation && !loading && !message"
                         >
@@ -398,21 +236,21 @@ class SquareMembershipStatusAlpine {
                         </button>
                         
                         <div 
-                            class="square-alpine-confirmation" 
+                            class="bg-red-50 p-4 rounded-md border border-red-200 my-4" 
                             x-show="showCancelConfirmation"
                         >
-                            <p>Are you sure you want to cancel your membership? This will end your subscription immediately.</p>
-                            <div class="square-alpine-confirmation-actions">
+                            <p class="mb-4 text-red-700">Are you sure you want to cancel your membership? This will end your subscription immediately.</p>
+                            <div class="flex space-x-3">
                                 <button 
-                                    class="square-alpine-button cancel"
+                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors duration-200"
                                     @click="cancelSubscription"
                                     :disabled="loading"
                                 >
-                                    <span x-show="loading" class="square-alpine-loading"></span>
+                                    <span x-show="loading" class="animate-spin h-4 w-4 border-2 border-white border-t-4 rounded-full"></span>
                                     <span x-text="loading ? 'Processing...' : '<?php echo esc_js($atts['confirm_cancel_text']); ?>'"></span>
                                 </button>
                                 <button 
-                                    class="square-alpine-button"
+                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-md transition-colors duration-200"
                                     @click="showCancelConfirmation = false"
                                     :disabled="loading"
                                 >
@@ -422,7 +260,7 @@ class SquareMembershipStatusAlpine {
                         </div>
                         
                         <div 
-                            class="square-alpine-message"
+                            class="p-4 rounded-md my-4"
                             :class="messageType"
                             x-show="message"
                             x-text="message"
@@ -430,15 +268,15 @@ class SquareMembershipStatusAlpine {
                     </div>
                     
                 <?php else: ?>
-                    <div class="square-alpine-status-detail">
-                        <div class="square-alpine-detail-value">
-                            <span class="square-alpine-status-inactive">No Active Subscription</span>
+                    <div class="flex mb-2">
+                        <div class="text-gray-800">
+                            <span class="text-red-600 font-semibold">No Active Subscription</span>
                         </div>
                     </div>
                     
                     <?php if (!empty($atts['subscribe_url'])): ?>
-                    <div style="margin-top: 15px;">
-                        <a href="<?php echo esc_url($atts['subscribe_url']); ?>" class="square-alpine-button">
+                    <div class="mt-4">
+                        <a href="<?php echo esc_url($atts['subscribe_url']); ?>" class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors duration-200">
                             <?php echo esc_html($atts['upgrade_button_text']); ?>
                         </a>
                     </div>
@@ -448,22 +286,22 @@ class SquareMembershipStatusAlpine {
             
             <!-- Payment Method -->
             <?php if ($has_subscription && $card): ?>
-            <div class="square-alpine-status-section">
-                <h4>Payment Method</h4>
+            <div class="mb-6 pb-6 border-b border-gray-200 last:border-b-0">
+                <h4 class="text-lg font-medium text-gray-700 mb-3">Payment Method</h4>
                 
-                <div class="square-alpine-card">
+                <div class="bg-white p-4 rounded-lg shadow-md">
                     <div>
-                        <span class="square-alpine-card-brand"><?php echo esc_html($card['brand']); ?></span>
+                        <span class="text-green-600 font-semibold"><?php echo esc_html($card['brand']); ?></span>
                         <span>•••• <?php echo esc_html($card['last4']); ?></span>
                     </div>
-                    <div class="square-alpine-card-expiry">
+                    <div class="text-gray-600 text-sm">
                         Expires <?php echo esc_html($card['exp_month']); ?>/<?php echo esc_html($card['exp_year']); ?>
                     </div>
                 </div>
                 
                 <?php if (!empty($atts['payment_methods_url'])): ?>
                 <div>
-                    <a href="<?php echo esc_url($atts['payment_methods_url']); ?>" class="square-alpine-button">
+                    <a href="<?php echo esc_url($atts['payment_methods_url']); ?>" class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors duration-200">
                         <?php echo esc_html($atts['manage_payment_text']); ?>
                     </a>
                 </div>

@@ -51,126 +51,8 @@ class SquareSubscriptionAlpine {
         // Enqueue Square Web Payments SDK
         wp_enqueue_script('square-web-payments-sdk', 'https://sandbox.web.squarecdn.com/v1/square.js', array(), null, true);
         
-        // Basic styling for the form
-        wp_add_inline_style('wp-block-library', $this->get_inline_css());
-    }
-    
-    /**
-     * Get inline CSS for the form
-     */
-    private function get_inline_css() {
-        return '
-            .square-alpine-form {
-                max-width: 600px;
-                margin: 20px 0;
-                padding: 20px;
-                background-color: #f9f9f9;
-                border-radius: 5px;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            }
-            
-            .square-alpine-form h3 {
-                margin-top: 0;
-                color: #333;
-            }
-            
-            .square-alpine-form-row {
-                margin-bottom: 15px;
-            }
-            
-            .square-alpine-form-row label {
-                display: block;
-                margin-bottom: 5px;
-                font-weight: 600;
-            }
-            
-            .square-alpine-form-row input[type="text"],
-            .square-alpine-form-row input[type="email"] {
-                width: 100%;
-                padding: 10px;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-            }
-            
-            .square-card-container {
-                height: 100px;
-                padding: 10px;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                background-color: white;
-                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-            }
-            
-            .square-alpine-form-error {
-                background-color: #ffebee;
-                color: #c62828;
-                padding: 10px 15px;
-                border-radius: 4px;
-                margin-bottom: 15px;
-                border-left: 4px solid #c62828;
-            }
-            
-            .square-alpine-form-message {
-                background-color: #e3f2fd;
-                color: #1565c0;
-                padding: 10px 15px;
-                border-radius: 4px;
-                margin-bottom: 15px;
-                border-left: 4px solid #1565c0;
-            }
-            
-            .square-alpine-form-success {
-                color: #2e7d32;
-                background-color: #e8f5e9;
-                padding: 10px;
-                border-radius: 4px;
-                margin-bottom: 15px;
-                border: 1px solid #a5d6a7;
-            }
-            
-            .square-alpine-button {
-                padding: 12px 24px;
-                border: none;
-                border-radius: 4px;
-                background-color: #1e88e5;
-                color: white;
-                cursor: pointer;
-                font-weight: 600;
-                transition: all 0.2s;
-                font-size: 16px;
-                line-height: 1.4;
-            }
-            
-            .square-alpine-button:hover {
-                background-color: #1976d2;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-                transform: translateY(-1px);
-            }
-            
-            .square-alpine-button:disabled {
-                background-color: #bbdefb;
-                cursor: not-allowed;
-                box-shadow: none;
-                transform: none;
-            }
-            
-            /* Loading spinner */
-            .square-alpine-loading {
-                display: inline-block;
-                width: 20px;
-                height: 20px;
-                border: 3px solid rgba(255, 255, 255, 0.3);
-                border-radius: 50%;
-                border-top-color: white;
-                animation: spin 1s ease-in-out infinite;
-                margin-right: 10px;
-                vertical-align: middle;
-            }
-            
-            @keyframes spin {
-                to { transform: rotate(360deg); }
-            }
-        ';
+        // Enqueue Tailwind CSS
+        wp_enqueue_style('tailwindcss', 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css', array(), null);
     }
     
     /**
@@ -187,28 +69,28 @@ class SquareSubscriptionAlpine {
             'button_text' => 'Subscribe Now',
             'title' => 'Subscribe to our Exclusive Club',
             'description' => 'Join our exclusive club for just $8.99/month',
-            'plan_id' => '',
+            'plan_id' => get_option('square_service_default_plan_id', ''),
             'redirect_url' => ''
         ), $atts, 'square_alpine_subscription');
         
         // Check if Square credentials are set
         if (empty($application_id) || empty($location_id)) {
-            return '<div class="square-alpine-form-error">Error: Square API credentials are not configured. Please set them in the plugin settings.</div>';
+            return '<div class="bg-red-50 text-red-700 p-4 rounded-md border-l-4 border-red-500">Error: Square API credentials are not configured. Please set them in the plugin settings.</div>';
         }
         
-        // Check if plan ID is set
+        // Check if plan ID is set (either in shortcode or as default in settings)
         if (empty($atts['plan_id'])) {
-            return '<div class="square-alpine-form-error">Error: Plan ID is required. Please add a plan_id attribute to the shortcode.</div>';
+            return '<div class="bg-red-50 text-red-700 p-4 rounded-md border-l-4 border-red-500">Error: No subscription plan ID found. Please either specify a plan_id in the shortcode or set a default plan ID in the Square Service settings.</div>';
         }
         
         // Check if user is logged in
         if (!is_user_logged_in()) {
-            return '<div class="square-alpine-form-error">Please <a href="' . wp_login_url(get_permalink()) . '">log in</a> to subscribe.</div>';
+            return '<div class="bg-red-50 text-red-700 p-4 rounded-md border-l-4 border-red-500">Please <a href="' . wp_login_url(get_permalink()) . '">log in</a> to subscribe.</div>';
         }
         
         // Check if user already has an active subscription
         if ($this->user_has_subscription()) {
-            return '<div class="square-alpine-form-error">You already have an active subscription. <a href="' . get_permalink(get_option('square_service_account_page_id')) . '">Manage your subscription</a>.</div>';
+            return '<div class="bg-red-50 text-red-700 p-4 rounded-md border-l-4 border-red-500">You already have an active subscription. <a href="' . get_permalink(get_option('square_service_account_page_id')) . '">Manage your subscription</a>.</div>';
         }
         
         // If user has an inactive subscription, show a message but still allow them to subscribe
@@ -218,7 +100,7 @@ class SquareSubscriptionAlpine {
         
         $subscription_message = '';
         if ($has_inactive_subscription) {
-            $subscription_message = '<div class="square-alpine-form-message"><strong>Note:</strong> Your previous subscription has been canceled. Fill out the form below to resubscribe.</div>';
+            $subscription_message = '<div class="bg-yellow-50 text-yellow-700 p-4 rounded-md border-l-4 border-yellow-500"><strong>Note:</strong> Your previous subscription has been canceled. Fill out the form below to resubscribe.</div>';
         }
         
         // Generate a unique form ID
@@ -236,7 +118,7 @@ class SquareSubscriptionAlpine {
         } ?>
         <div 
             id="<?php echo esc_attr($form_id); ?>" 
-            class="square-alpine-form" 
+            class="mx-auto p-5 bg-white rounded-lg shadow-md" 
             x-data="squareSubscriptionForm({
                 applicationId: '<?php echo esc_js($application_id); ?>',
                 locationId: '<?php echo esc_js($location_id); ?>',
@@ -248,54 +130,56 @@ class SquareSubscriptionAlpine {
                 formId: '<?php echo esc_js($form_id); ?>'
             })"
         >
-            <h3><?php echo esc_html($atts['title']); ?></h3>
-            <p><?php echo esc_html($atts['description']); ?></p>
+            <h3 class="text-xl font-semibold text-gray-800 mb-4"><?php echo esc_html($atts['title']); ?></h3>
+            
+            <?php if (!empty($atts['description'])): ?>
+            <p class="text-gray-600 mb-5"><?php echo esc_html($atts['description']); ?></p>
+            <?php endif; ?>
             
             <template x-if="error">
-                <div class="square-alpine-form-error" x-text="error"></div>
+                <div class="bg-red-50 text-red-700 p-4 rounded-md border-l-4 border-red-500" x-text="error"></div>
             </template>
             
             <template x-if="success">
-                <div class="square-alpine-form-success" x-text="success"></div>
+                <div class="bg-green-50 text-green-700 p-4 rounded-md border-l-4 border-green-500" x-text="success"></div>
             </template>
             
-            <form @submit.prevent="submitForm" x-show="!success">
-                <div class="square-alpine-form-row">
-                    <label for="<?php echo esc_attr($form_id); ?>-card-name">Name on Card</label>
+            <form @submit.prevent="submitForm" x-show="!success" class="space-y-4">
+                <div class="mb-4">
+                    <label for="<?php echo esc_attr($form_id); ?>-cardholderName" class="block text-sm font-medium text-gray-700 mb-1">Cardholder Name</label>
                     <input 
+                        id="<?php echo esc_attr($form_id); ?>-cardholderName" 
                         type="text" 
-                        id="<?php echo esc_attr($form_id); ?>-card-name" 
                         x-model="cardholderName" 
                         required
-                        :disabled="loading"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     >
                 </div>
                 
-                <div class="square-alpine-form-row">
-                    <label for="<?php echo esc_attr($form_id); ?>-card-email">Email</label>
+                <div class="mb-4">
+                    <label for="<?php echo esc_attr($form_id); ?>-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input 
+                        id="<?php echo esc_attr($form_id); ?>-email" 
                         type="email" 
-                        id="<?php echo esc_attr($form_id); ?>-card-email" 
                         x-model="email" 
                         required
-                        :disabled="loading"
-                        value="<?php echo esc_attr($user_email); ?>"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     >
                 </div>
                 
-                <div class="square-alpine-form-row">
-                    <label>Card Information</label>
-                    <div id="<?php echo esc_attr($form_id); ?>-card-container" class="square-card-container"></div>
-                    <div x-show="cardError" class="square-alpine-form-error" x-text="cardError" style="margin-top: 8px;"></div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Card Information</label>
+                    <div id="<?php echo esc_attr($form_id); ?>-card-container"></div>
+                    <div x-show="cardError" class="mt-2 bg-red-50 text-red-700 p-3 rounded-md border-l-4 border-red-500" x-text="cardError"></div>
                 </div>
                 
-                <div class="square-alpine-form-row">
+                <div class="mt-6">
                     <button 
                         type="submit" 
-                        class="square-alpine-button" 
+                        class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow transition-all duration-200 ease-in-out transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" 
                         :disabled="loading"
                     >
-                        <span x-show="loading" class="square-alpine-loading"></span>
+                        <span x-show="loading" class="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                         <span x-text="loading ? 'Processing...' : '<?php echo esc_js($atts['button_text']); ?>'"></span>
                     </button>
                 </div>
