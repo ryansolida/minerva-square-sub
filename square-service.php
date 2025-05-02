@@ -94,54 +94,10 @@ class SquareServicePlugin {
             require_once plugin_dir_path(__FILE__) . 'admin/settings.php';
         }
         
-        // Register page templates
-        add_filter('theme_page_templates', array($this, 'register_page_templates'));
-        add_filter('template_include', array($this, 'load_page_template'));
-        
-        // Register scripts and styles
-        add_action('wp_enqueue_scripts', array($this, 'register_scripts'));
-        
         // Initialize Elementor integration if Elementor is active
         add_action('elementor/loaded', array($this, 'init_elementor_integration'));
     }
     
-    /**
-     * Register custom page templates
-     *
-     * @param array $templates Existing templates
-     * @return array Modified templates
-     */
-    public function register_page_templates($templates) {
-        // Add the Square Service template
-        $templates[plugin_dir_path(__FILE__) . 'page-templates/square-demo.php'] = 'Square Service Demo';
-        return $templates;
-    }
-    
-    /**
-     * Load the custom page template if needed
-     *
-     * @param string $template Current template path
-     * @return string Template path to use
-     */
-    public function load_page_template($template) {
-        global $post;
-        
-        if (!$post) {
-            return $template;
-        }
-        
-        // Get the template selected for this page
-        $template_file = get_post_meta($post->ID, '_wp_page_template', true);
-        
-        // Check if the template is one of our custom templates
-        if (plugin_dir_path(__FILE__) . 'page-templates/square-demo.php' === $template_file) {
-            if (file_exists(plugin_dir_path(__FILE__) . 'page-templates/square-demo.php')) {
-                return plugin_dir_path(__FILE__) . 'page-templates/square-demo.php';
-            }
-        }
-        
-        return $template;
-    }
     
     /**
      * Initialize Elementor integration
@@ -154,49 +110,7 @@ class SquareServicePlugin {
         square_service_elementor();
     }
     
-    /**
-     * Register scripts and styles for Square payment processing
-     */
-    public function register_scripts() {
-        return;
-        // Register Square Web Payments SDK from CDN
-        wp_register_script(
-            'square-web-payments-sdk',
-            'https://sandbox.web.squarecdn.com/v1/square.js',
-            array(),
-            '1.0.0',
-            true
-        );
-        
-        // Register our custom JS for handling Square payments
-        wp_register_script(
-            'square-service-payments',
-            plugin_dir_url(__FILE__) . 'assets/js/square-payments.js',
-            array('jquery', 'square-web-payments-sdk'),
-            '1.0.0',
-            true
-        );
-        
-        // Register CSS for payment forms
-        wp_register_style(
-            'square-service-forms',
-            plugin_dir_url(__FILE__) . 'assets/css/square-forms.css',
-            array(),
-            '1.0.0'
-        );
-        
-        // Add localized data for our JS
-        $square_data = array(
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'application_id' => get_option('square_service_application_id', ''),
-            'location_id' => get_option('square_service_location_id', ''),
-            'environment' => get_option('square_service_environment', 'sandbox'),
-            'nonce' => wp_create_nonce('square_service_nonce')
-        );
-        
-        wp_localize_script('square-service-payments', 'square_service_params', $square_data);
-    }
-    
+   
     /**
      * Get an instance of the SquareService
      * 
