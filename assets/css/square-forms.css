@@ -1,0 +1,314 @@
+/**
+ * Square Service Payment Forms Stylesheet
+ * 
+ * Styles for Square payment forms, cards, and related elements.
+ */
+
+/* Main form container */
+.square-payment-form {
+    max-width: 600px;
+    margin: 20px 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transition: opacity 0.3s ease;
+}
+
+.square-payment-form.square-loading {
+    opacity: 0.7;
+}
+
+.square-payment-form.square-loading:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: square-spinner 1s linear infinite;
+}
+
+@keyframes square-spinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Form title */
+.square-form-title {
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: #333;
+    font-weight: 600;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+}
+
+/* Form fields */
+.square-form-row {
+    margin-bottom: 20px;
+}
+
+.square-form-row label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #444;
+    font-size: 14px;
+}
+
+.square-card-container {
+    height: 100px;
+    min-height: 90px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+    transition: border-color 0.3s ease;
+    background-color: white;
+}
+
+.square-card-container.sq-focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Form buttons */
+.square-payment-form button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    position: relative;
+    min-width: 150px;
+}
+
+.square-payment-form button:hover {
+    background-color: #2980b9;
+}
+
+.square-payment-form button:disabled {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+}
+
+.square-payment-form button.square-loading {
+    text-indent: -9999px;
+}
+
+.square-payment-form button.square-loading:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid white;
+    border-radius: 50%;
+    animation: square-spinner 1s linear infinite;
+}
+
+/* Error messages */
+.square-form-errors {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    display: none;
+}
+
+/* Success message */
+.square-success {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Error message */
+.square-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 4px;
+}
+
+/* Card details display */
+.square-card-details {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.square-card-details-title {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.square-card-brand-icon {
+    display: inline-block;
+    vertical-align: middle;
+    width: 40px;
+    height: 25px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    margin-right: 10px;
+}
+
+.square-card-brand-visa {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMjUiIHZpZXdCb3g9IjAgMCA0MCAyNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMCAwaDQwdjI1SDBWMHoiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTYuMTcgMTEuNzZMMTMuNjQgMThoLTEuNjlMMTAuNDMgMTNjLS4xLS40LS4yLS41LS41LS42LS41LS4yLTEuMi0uMy0xLjgtLjRsMC0uMmg3LjVjLjQgMCAuOC4yLjkuN2wuNyAzLjJabTEzLjIgNC4yYzAtMS4zLTEuOC0xLjQtMS44LTItLjEtLjIuMi0uNC41LS40LjQgMCAxLjEtLjEgMi4xLjRsLjQtMS42Yy0uNS0uMi0xLjEtLjMtMS45LS4zLTItLjEtMy40IDEuMS0zLjQgMi42IDAgMS4xIDEgMS44IDEuOCAyLjEuOC4zIDEgLjYuOSAxYy0uMS40LS44LjUtMS4yLjVzLTEuNy0uMy0yLjEtLjRsLS40IDEuN2MuNC4yIDEuNC40IDIuMS40IDIuMSAwIDMuNS0xIDMuNS0yLjhWMTZabS0xMy45IDBjLTEtLjQtMS42LS43LTEuNi0xLjFzLjUtLjYgMS4xLS42Yy41IDAgLjkuMSAxLjMuM2wuMi4xLjMtMS42YTYgNiAwIDAwLTJMLTUuOTUgNWwzMi4xIDE2LjQyTDM0LDE2bC0xOC41LTJabS01LjMgMi4xSDYuOTdMOSA4aC0yLjg2VjZzLS43My4yLS40LS40MS0uOTguMDctLjk4LjA3bC0uMDggMTIuMzZaTTI3LjczIDhoMS4zQzI5LjUgOCAzMCA4LjEgMzAgOC4zTDI5IDE4aC0xLjhMMjkuMSA4LjRoLTEuNGwuMDMtLjRabTYuMy0uMDFjLS4zLjAyLS43LjQtLjkuOGwtMi45IDguOWgxLjlsMi04LjlIMzJsMC0uOGgtOC43Mmw0LjY2IDEuMTVMMjcuNzMgOHoiIGZpbGw9IiMyNDI0QkMiLz48L3N2Zz4=');
+}
+
+.square-card-brand-mastercard {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMjUiIHZpZXdCb3g9IjAgMCA0MCAyNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMCAwaDQwdjI1SDBWMHoiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTUuNyAxOS44Yy4xLjEuMy4yLjUuMi0uNC42LTEgMS4xLTEuNiAxLjVhNy4zIDcuMyAwIDAxLTkuNy0zIDcuNiA3LjYgMCAwMS0uNy01LjkgNy4zIDcuMyAwIDAxOC41LTUuNWM0IDAgNy4zIDMuMyA3LjMgNy4zIDAgLjYgMCAxLjItLjIgMS44LS40LS4yLS45LS40LTEuNC0uNC0xLjQgMC0yLjYgMS4yLTIuNiAyLjYgMCAuNS4xLjkuNCAxLjNsLS41LjF6bTkuMiAxLjZjLTMuNSAzLjYtOS4yIDMuNy0xMi44LjNhOC45IDguOSAwIDAxMy0xNC4yQzcgNS4xIDEwLjggNC45IDE0IDYuN2E5IDkgMCAxMS0xLjEgMTQuM2MuMS4xLjMuMy41LjRoMTEuOXYtLjNsLS40LjNoLS4xek0yMCAxMi41YzAtMy4yIDIuNS01LjggNS43LTZhNi4yIDYuMiAwIDAxMy43LjVBOS4yIDkuMiAwIDAwMjEgNC43Yy01LjQtLjItMTAgMy45LTEwLjIgOS4zLS4xIDMuNiAxLjcgNi44IDQuNyA4LjUgNi4yIDMuNSAxNC0uMSAxNC44LTcuMS4xLS45IDAtMS44LS4zLTIuNi0xIDIuOS0zLjcgNS01LjUgNS4zYTUuOCA1LjggMCAwMS01LjktMS44IDUuOSA1LjkgMCAwMS41LTcuOGw4LjUgNC4zYy0uNS0uOS0xLjItMS41LTIuMS0yLTEuNS0uNy0zLjMtLjUtNC42LjQtMS40IDEuMS0yLjEgMi44LTEuOSA0LjUuMyAxLjcgMS41IDMuMSAzLjIgMy42bC00LS4ybDEuOSAyLjFhNS44IDUuOCAwIDAwNC4zLTEuMmM0LjQtMy44IDQuOS0xMC42IDEtMTUuMUE5LjYgOS42IDAgMDA5IDUuMmgtLjJjLTUuNCAwLTkuOCA0LjQtOS44IDkuOHYuOS4xYTcuMyA3LjMgMCAwMDExLjYgNS41IDcuNyA3LjcgMCAwMDIuNS00LjVDMTUgMTYgMTQgMTUgMTMuNiAxNGMtLjctMS41LS4yLTMuMyAxLjItNC4xLjQtLjIuOS0uNC0uMi4yIDEtLjQuMS0uMS42LS4yLjUgMCAxIC4zIDEuMy43bC4xLjFjLjMuNS41IDEuMS40IDEuNy0uMSAxLS43IDIuMS0xLjYgMi42LS41LjItMS4xLjMtMS42LjEtLjMgMC0uNi0uMi0uOC0uNC0uMi0uMy0uNC0uNi0uNC0uOS0uMS0uNi4yLTEuMi42LTEuNS4yLS4xLjMtLjIuNS0uMi0uMS0uMS0uMy0uMi0uNC0uMlptNi44LTEuM2M0LjQgMCA4IDMuNiA4IDguMWg0LjVWNGgtMjl2MTUuMWw0LjEuMWE4IDggMCAwMTUuMS0xLjZjMS4zIDAgMi42LjMgMy43LjkuNy0xLjQgMS44LTIuNSAzLjEtMy4yYTguMiA4LjIgMCAwMTcuMy0uMWMxLjQuNS0uNCAwLS4yLjEtMi43LTEtNS42LjEtNyAyLjYtLjcgMS4zLS45IDIuOC0uMyA0LjIuNCAxIC43IDEuNCAxLjQgMS44LjggMCAxIC42IDAgMCAuMi4xLjcuMi42LjJaIiBmaWxsPSIjRDkxMDFBIi8+PHBhdGggZD0iTTMxLjkgMTkuMmwuNS0uMWMuMS0uMy0uMy0uMi0uNC0uMWgtLjF6IiBmaWxsPSIjRDkxMDFBIi8+PC9zdmc+');
+}
+
+.square-card-brand-amex {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMjUiIHZpZXdCb3g9IjAgMCA0MCAyNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMCAwaDQwdjI1SDBWMHoiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMzYuNTggMTBoLTcuN2wtMS41NiAzLjc0TDI1Ljc1IDEwaC0xOC41djEyLjJoMTguMDNsMS44My00LjI2IDEuOSA0LjI2aDYuMzV2LTMuODRoLjk2YzEuMzggMCAyLjcyLS4zOSAyLjcyLTMuMDQgMC0xLjE2LS4yNy0yLjMzLTIuNDYtMi4zM3YtM3ptLTE3LjEgMTBsLTEuMTctMi44M2gzLjY3TDIwLjgyIDIwaC0xLjM0em03LjE4LTQuMmgtLjE2bC0uMTMgMS4wNC0uMS0xLjA0aC0yLjExbDEuODQgMi4yMWgtMi41N3YtMkg0LjI1di0xLjIyaDE5LjA4bDEuMjMgMy4yMSAxLjI2LTMuMjF6TTQwIDE0LjI4YzAgMy4yNS0yLjc5IDIuNzItMy41NiAyLjcyaC0xLjljMCAxLjI4LS4zMSAxLjQ3LTEuNTMgMS40N2gtLjkzTDI5LjIgMTNoNS4yNXYzLjcyaDEuOTdjMS4yNyAwIDEuMjctLjI2IDEuMjctLjkzdi0xLjA0aC0xLjI3di0xLjc2aDEuMjd2LS4yNS4wNGMwLTEuMTYtLjQyLTEuNDctMS40NC0xLjQ3aC0xLjhWMTNoNC4yNmMxLjk0IDAgMS43OSAxLjI1IDEuNzkgMS4yOHptLTkuMTMtMi4wNGgtNS4wOUwyMy45IDE1LjlWMTNoLTUuNzdsLTEuMzIgMy4wNy0xLjI1LTMuMDdIOS44OHY0LjI5TDcuOTQgMTNINS4xOWw0LjMgNC43MmgxLjhsMS44Mi0yLjIydjIuMjJoMy41NmwuNi0xLjQ0aDMuNDhsLjYgMS40NGg4LjEyVjEzLjcxbDIuNCAxLjQ3djEuNTRoMS44NEwzNC43MyAxNWguMS4wM2MuMTMuMDQuMTEuMDQuMTMuMDR2MS42NWgxLjgybC41Mi0xLjJjLjI3LS42Mi4zNS0xLjMyLS40Ni0xLjMyVjEyaDMuOTZ2LjI0SDQwelptLTI2LjUyLjY0bC44NC0xLjloLjk1Yy42NSAwIC43My4zNy42NS43M2wtLjA4LjM3YzAtLjAzLS4wNC44LS44LjguNzMgMC0uMDA0IDAgLjcyOHYtLjUyYzAtLjA0LS4wMi0uNDgtLjg2LS40OGgtNC4ydjEuOTVoMi44NnptNy40Mi0uOTZjLjU1IDAgLjgzLjA2LjgxIDEuMDUgMCAuMzYtLjE5LjgyLS44NS44MmgtMi4xMlYxMC4xM2gyLjEyYy44IDAgLjg0LjQ5Ljg0Ljc0LS4wMi40OC0uMDIuOTQtLjggMS4wNXptLjg3LTEuODNoLTMuODZ2NWgzLjg1Yy43NCAwIDEuNjktLjIgMS42OS0xLjNzLS4zLS45Ny0uNTItMS4xNGMuMzYtLjIzLjUtLjYyLjUtMSAwLS40OC0uMTktMS41Ni0xLjY2LTEuNTZ6bS0yLjEyLjk4aDEuMDRjLjQzIDAgLjY2LjEzLjY0LjYgMCAuNTItLjMzLjYtLjcuNmgtLjk4di0xLjJ6bTAgMi4xOGgxLjA0Yy40NSAwIC43Mi4yLjcuNzYgMCAuNTUtLjMzLjcyLS42Ny43MmgtMS4wN3YtMS40OHoiIGZpbGw9IiMwMDZGQ0YiLz48L3N2Zz4=');
+}
+
+.square-card-brand-discover {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMjUiIHZpZXdCb3g9IjAgMCA0MCAyNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMCAwaDQwdjI1SDBWMHoiIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMCAwdjI1aDQwVjBIMHptMjAgMTIuNTFjMC0xLjk5IDEuNjItMy42MSAzLjYyLTMuNjEgMiAwIDMuNjIgMS42MiAzLjYyIDMuNiAwIDEuOTktMS42MiAzLjYtMy42MiAzLjYtMiAwLTMuNjItMS42MS0zLjYyLTMuNnpNNC40MyA5LjVhMiAyIDAgMDAtLjg2LjE5djQuNmEyIDIgMCAwMC44Ni4yYy45IDAgMS42OS0uODMgMS42OS0yLjUgMC0xLjYyLS43OS0yLjQ5LTEuNjktMi40OXptMjYuMTYgNS4zOHYtNS43N2gtMS43djEuNTNjLS41My0uNjYtMS4zNC0xLjA3LTIuMjMtMS4wNy0xLjk5IDAtMy41OCAxLjYtMy41OCAzLjU3IDAgMS45NyAxLjYgMy41NyAzLjU4IDMuNTcuODkgMCAxLjctLjQxIDIuMjMtMS4wN3YxLjAxaDEuN3YtMS43N3ptLTEyLjcuMjhhMy42IDMuNiAwIDAwMy4zOS00Ljk1aC0xLjc1YTIuMjcgMi4yNyAwIDAxMS44OSAyLjI2IDIuMjcgMi4yNyAwIDAxLTEuOSAyLjI1djBMNS44MiA2LjA0SDB2MTIuODZoMTkuN2MtLjI2LS41My0uNC0xLjEyLS40LTEuNzRhMy43IDMuNyAwIDAxLjUtMS44NGwtMS45LjAxTDQuNDMgMTUuNGEzLjkyIDMuOTIgMCAwMS0yLjUtLjQ3di01LjdhMy45IDMuOSAwIDAxMi41LS40NyA0LjYgNC42IDAgMDE0LjU3IDQuOWMwIDMuNi0yLjIzIDQuOS00LjU3IDQuOTRsMTMuNDYtLjAyem0uNDUgMy4yYzIuODkgMCA1LjI0LTIuMzEgNS4yNC01LjE2YTUuMiA1LjIgMCAwMC01LjI0LTUuMTYgNS4yIDUuMiAwIDAwLTUuMjUgNS4xNmMwIDIuODUgMi4zNiA1LjE2IDUuMjUgNS4xNnoiIGZpbGw9IiMyNDI5NTUiLz48cGF0aCBkPSJNMTguMzMgNi42aC0xLjlsLTEuNjkuNzFMNDAuMDEgMjVQMjAgMTZsLTEuNjctOS40eiIgZmlsbD0iI0YzOTQzQSIvPjwvc3ZnPg==');
+}
+
+.square-card-last4 {
+    font-family: monospace;
+    padding: 2px 6px;
+    background-color: #f9f9f9;
+    border-radius: 3px;
+    border: 1px solid #eee;
+}
+
+/* Subscription details */
+.square-subscription-details {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.square-subscription-details-title {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.square-subscription-info {
+    margin-bottom: 5px;
+}
+
+.square-subscription-label {
+    font-weight: 500;
+    color: #666;
+}
+
+.square-subscription-value {
+    margin-left: 5px;
+}
+
+/* Cancel subscription button */
+.square-cancel-button {
+    background-color: #e74c3c;
+}
+
+.square-cancel-button:hover {
+    background-color: #c0392b;
+}
+
+/* Confirmation dialog */
+.square-confirm-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.square-confirm-dialog-content {
+    background-color: white;
+    border-radius: 8px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.square-confirm-dialog-title {
+    font-size: 20px;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.square-confirm-dialog-message {
+    margin-bottom: 25px;
+    color: #555;
+    line-height: 1.5;
+}
+
+.square-confirm-dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.square-confirm-dialog-button {
+    margin-left: 10px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+}
+
+.square-confirm-dialog-button-cancel {
+    background-color: #f1f1f1;
+    color: #333;
+}
+
+.square-confirm-dialog-button-confirm {
+    background-color: #e74c3c;
+    color: white;
+}
+
+/* Responsive styles */
+@media (max-width: 767px) {
+    .square-payment-form {
+        padding: 15px;
+    }
+    
+    .square-form-title {
+        font-size: 18px;
+    }
+    
+    .square-card-container {
+        height: 90px;
+    }
+}

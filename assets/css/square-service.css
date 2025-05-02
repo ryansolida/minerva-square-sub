@@ -1,0 +1,263 @@
+/**
+ * Square Service CSS
+ * 
+ * Styles for Square subscription and payment shortcodes
+ */
+
+/* General styles */
+.square-payment-form {
+    max-width: 600px;
+    margin: 20px 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.square-form-title {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 24px;
+}
+
+.square-form-description {
+    margin-bottom: 20px;
+    color: #666;
+}
+
+/* Form styles */
+.square-form-row {
+    margin-bottom: 15px;
+}
+
+.square-form-row label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.square-form-row input[type="text"],
+.square-form-row input[type="email"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Square card container - using the new class approach */
+.square-card-container {
+    height: 100px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Form submit row with better spacing */
+.square-form-submit {
+    margin-top: 20px;
+}
+
+/* Error and success messages */
+.square-error, .square-success {
+    padding: 12px;
+    margin: 15px 0;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.square-error {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+
+.square-success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+
+/* Form errors container */
+.square-form-errors {
+    margin-bottom: 15px;
+}
+
+/* Form results container */
+.square-form-result {
+    margin-top: 20px;
+}
+
+/* Buttons */
+.square-button,
+button.square-button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    background-color: #1e88e5;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    font-size: 16px;
+    line-height: 1.4;
+    text-align: center;
+    display: inline-block;
+}
+
+.square-button:hover,
+button.square-button:hover {
+    background-color: #1976d2;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+}
+
+.square-button:disabled,
+button.square-button:disabled {
+    background-color: #bbdefb;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+button#cancel-cancel-btn {
+    background-color: #9e9e9e;
+}
+
+button#confirm-cancel-btn {
+    background-color: #e53935;
+}
+
+button#confirm-cancel-btn:hover {
+    background-color: #d32f2f;
+}
+
+button.delete-card-btn {
+    background-color: #f44336;
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+button.delete-card-btn:hover {
+    background-color: #e53935;
+}
+
+/* Card details section */
+.square-card-details {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.square-card-details-title {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 18px;
+    color: #333;
+}
+
+/* Card list for multiple cards */
+.square-card-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+}
+
+.square-card-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 10px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    transition: box-shadow 0.2s;
+}
+
+.square-card-item:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.card-brand {
+    font-weight: 600;
+}
+
+.card-expiry {
+    color: #757575;
+    font-size: 14px;
+}
+
+/* Membership status */
+.square-membership-status {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.square-membership-status.active {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.square-membership-status.inactive,
+.square-membership-status.canceled {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.square-membership-status.paused {
+    background-color: #fff8e1;
+    color: #f57f17;
+}
+
+/* Next billing date & payment amount */
+.square-next-billing-date,
+.square-next-payment-amount {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #e3f2fd;
+    border-radius: 4px;
+    color: #1565c0;
+}
+
+/* Payment card info */
+.square-payment-card-info {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+/* Cancel membership confirmation */
+#cancel-confirmation {
+    margin-top: 10px;
+    padding: 15px;
+    background-color: #ffebee;
+    border: 1px solid #ef9a9a;
+    border-radius: 4px;
+}
+
+/* Add some space between buttons */
+#cancel-cancel-btn {
+    margin-left: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .card-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .card-actions {
+        margin-top: 10px;
+        align-self: flex-end;
+    }
+}
