@@ -18,22 +18,47 @@ require_once plugin_dir_path(__FILE__) . 'includes/autoload.php';
 require_once plugin_dir_path(__FILE__) . 'includes/helpers.php';
 require_once plugin_dir_path(__FILE__) . 'includes/SquareService.php';
 
-require_once plugin_dir_path(__FILE__) . 'includes/square-subscription-alpine.php';
-require_once plugin_dir_path(__FILE__) . 'includes/square-membership-status-alpine.php';
+require_once plugin_dir_path(__FILE__) . 'includes/membership_signup.php';
+require_once plugin_dir_path(__FILE__) . 'includes/membership_status.php';
 require_once plugin_dir_path(__FILE__) . 'admin/settings.php';
 
 /**
- * Enqueue Tailwind CSS from CDN
+ * Enqueue frontend assets (Tailwind CSS and Alpine.js)
  */
-function square_service_enqueue_tailwind() {
+function square_service_enqueue_frontend_assets() {
+    // Enqueue Tailwind CSS
     wp_enqueue_style(
-        'tailwindcss',
-        'https://cdn.tailwindcss.com',
+        'square-service-tailwindcss',
+        'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
         array(),
-        null
+        '2.2.19'
+    );
+    
+    // Enqueue Alpine.js
+    wp_enqueue_script(
+        'square-service-alpinejs',
+        'https://cdn.jsdelivr.net/npm/alpinejs@3.12.0/dist/cdn.min.js',
+        array(),
+        '3.12.0',
+        true // Load in footer
+    );
+    
+    // For now, always load the Square SDK on all pages
+    // This ensures it's available when needed, especially during development
+    $environment = get_option('square_service_environment', 'sandbox');
+    $sdk_url = $environment === 'production' 
+        ? 'https://web.squarecdn.com/v1/square.js' 
+        : 'https://sandbox.web.squarecdn.com/v1/square.js';
+        
+    wp_enqueue_script(
+        'square-web-payments-sdk',
+        $sdk_url,
+        array(),
+        null,
+        true // Load in footer
     );
 }
-add_action('wp_enqueue_scripts', 'square_service_enqueue_tailwind');
+add_action('wp_enqueue_scripts', 'square_service_enqueue_frontend_assets');
 
 /**
  * Check user's Square subscription status on login and sync with WordPress

@@ -29,7 +29,7 @@ class SquareSubscriptionAlpine {
      * Constructor
      */
     private function __construct() {
-        add_shortcode('square_alpine_subscription', array($this, 'render_shortcode'));
+        add_shortcode('membership_signup', array($this, 'render_shortcode'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_action('wp_ajax_square_alpine_subscribe', array($this, 'handle_subscription_ajax'));
         add_action('wp_ajax_nopriv_square_alpine_subscribe', array($this, 'handle_subscription_ajax'));

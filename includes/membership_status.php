@@ -28,7 +28,7 @@ class SquareMembershipStatusAlpine {
      * Constructor
      */
     private function __construct() {
-        add_shortcode('square_alpine_membership', array($this, 'render_shortcode'));
+        add_shortcode('membership_status', array($this, 'render_shortcode'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_action('wp_ajax_square_alpine_cancel_subscription', array($this, 'handle_cancel_ajax'));
     }
