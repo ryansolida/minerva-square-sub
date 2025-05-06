@@ -32,6 +32,7 @@ class MembershipStatus {
     private function __construct() {
         add_shortcode('membership_status', array($this, 'render_shortcode'));
         add_action('wp_ajax_cancel_subscription', array($this, 'handle_cancel_ajax'));
+        add_action('wp_ajax_update_payment_method', array($this, 'handle_update_payment_ajax'));
     }
     
     /**
@@ -286,11 +287,13 @@ class MembershipStatus {
             </div>
             
             <!-- Payment Method -->
-            <?php if ($has_subscription && $card): ?>
+            <?php if ($has_subscription && $is_active): ?>
             <div class="mb-6 pb-6 border-b border-gray-200 last:border-b-0">
                 <h4 class="text-lg font-medium text-gray-700 mb-3">Payment Method</h4>
                 
-                <div class="bg-white p-4 rounded-lg shadow-md">
+                <!-- Current Payment Method -->
+                <?php if ($card): ?>
+                <div class="bg-white p-4 rounded-lg shadow-md mb-4" x-show="!showUpdatePayment">
                     <div>
                         <span class="text-green-600 font-semibold"><?php echo esc_html($card['brand']); ?></span>
                         <span>•••• <?php echo esc_html($card['last4']); ?></span>
@@ -299,10 +302,59 @@ class MembershipStatus {
                         Expires <?php echo esc_html($card['exp_month']); ?>/<?php echo esc_html($card['exp_year']); ?>
                     </div>
                 </div>
+                <?php endif; ?>
+                
+                <!-- Update Payment Method Button -->
+                <div class="mt-4" x-show="!showUpdatePayment && !paymentLoading && !paymentMessage">
+                    <button 
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors duration-200" 
+                        @click="showUpdatePayment = true"
+                    >
+                        Update Payment Method
+                    </button>
+                </div>
+                
+                <!-- Update Payment Method Form -->
+                <div 
+                    class="bg-gray-50 p-4 rounded-md border border-gray-200 my-4" 
+                    x-show="showUpdatePayment"
+                >
+                    <h5 class="font-medium mb-3">Enter New Payment Details</h5>
+                    
+                    <!-- Square Card Form -->
+                    <div id="square-card-container" class="mb-4"></div>
+                    
+                    <!-- Payment Form Buttons -->
+                    <div class="flex space-x-3 mt-4">
+                        <button 
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors duration-200"
+                            @click="updatePaymentMethod"
+                            :disabled="paymentLoading"
+                        >
+                            <span x-show="paymentLoading" class="animate-spin h-4 w-4 border-2 border-white border-t-4 rounded-full"></span>
+                            <span x-text="paymentLoading ? 'Processing...' : 'Update Payment Method'"></span>
+                        </button>
+                        <button 
+                            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-md transition-colors duration-200"
+                            @click="showUpdatePayment = false"
+                            :disabled="paymentLoading"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Payment Update Message -->
+                <div 
+                    class="p-4 rounded-md my-4"
+                    :class="paymentMessageType === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'"
+                    x-show="paymentMessage"
+                    x-text="paymentMessage"
+                ></div>
                 
                 <?php if (!empty($atts['payment_methods_url'])): ?>
-                <div>
-                    <a href="<?php echo esc_url($atts['payment_methods_url']); ?>" class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors duration-200">
+                <div x-show="!showUpdatePayment && !paymentLoading">
+                    <a href="<?php echo esc_url($atts['payment_methods_url']); ?>" class="inline-block px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-md transition-colors duration-200 mt-2">
                         <?php echo esc_html($atts['manage_payment_text']); ?>
                     </a>
                 </div>
@@ -311,6 +363,7 @@ class MembershipStatus {
             <?php endif; ?>
         </div>
         
+        <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
         <script>
             document.addEventListener('alpine:init', () => {
                 Alpine.data('membershipStatus', (config) => ({
@@ -324,6 +377,117 @@ class MembershipStatus {
                     loading: false,
                     message: '',
                     messageType: '',
+                    showUpdatePayment: false,
+                    paymentLoading: false,
+                    paymentMessage: '',
+                    paymentMessageType: '',
+                    card: null,
+                    cardToken: '',
+                    
+                    init() {
+                        // Initialize Square payment form when update payment is shown
+                        this.$watch('showUpdatePayment', (value) => {
+                            if (value) {
+                                this.initializeSquarePayment();
+                            }
+                        });
+                    },
+                    
+                    initializeSquarePayment() {
+                        // Get Square application ID from WordPress settings
+                        const appId = '<?php echo esc_js(get_option("square_service_application_id", "sandbox-sq0idb-YOUR-SANDBOX-APP-ID")); ?>';
+                        const locationId = '<?php echo esc_js(get_option("square_service_location_id", "YOUR-LOCATION-ID")); ?>';
+                        
+                        // Initialize Square
+                        if (!window.Square) {
+                            console.error('Square.js failed to load properly');
+                            this.paymentMessage = 'Payment form could not be loaded. Please try again later.';
+                            this.paymentMessageType = 'error';
+                            return;
+                        }
+                        
+                        const payments = window.Square.payments(appId, locationId);
+                        
+                        // Initialize card
+                        payments.card().then(card => {
+                            this.card = card;
+                            card.attach('#square-card-container');
+                        }).catch(e => {
+                            console.error('Initializing Card failed', e);
+                            this.paymentMessage = 'Payment form could not be loaded. Please try again later.';
+                            this.paymentMessageType = 'error';
+                        });
+                    },
+                    
+                    async updatePaymentMethod() {
+                        if (!this.card) {
+                            this.paymentMessage = 'Payment form not loaded. Please refresh and try again.';
+                            this.paymentMessageType = 'error';
+                            return;
+                        }
+                        
+                        this.paymentLoading = true;
+                        this.paymentMessage = '';
+                        
+                        try {
+                            // Get a payment token from the card form
+                            const result = await this.card.tokenize();
+                            
+                            if (result.status === 'OK') {
+                                // Send the token to the server to update the payment method
+                                this.cardToken = result.token;
+                                this.processPaymentUpdate();
+                            } else {
+                                this.paymentLoading = false;
+                                this.paymentMessage = 'Failed to process card. Please check your card details and try again.';
+                                this.paymentMessageType = 'error';
+                            }
+                        } catch (e) {
+                            this.paymentLoading = false;
+                            this.paymentMessage = 'Error processing card: ' + e.message;
+                            this.paymentMessageType = 'error';
+                            console.error('Error tokenizing card', e);
+                        }
+                    },
+                    
+                    processPaymentUpdate() {
+                        fetch(this.ajaxUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: new URLSearchParams({
+                                action: 'update_payment_method',
+                                subscription_id: this.subscriptionId,
+                                card_token: this.cardToken,
+                                nonce: this.nonce
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            this.paymentLoading = false;
+                            
+                            if (result.success) {
+                                this.paymentMessage = result.data.message;
+                                this.paymentMessageType = 'success';
+                                this.showUpdatePayment = false;
+                                
+                                // Reload the page after a delay
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 2000);
+                            } else {
+                                this.paymentMessage = result.data.message;
+                                this.paymentMessageType = 'error';
+                            }
+                        })
+                        .catch(error => {
+                            this.paymentLoading = false;
+                            this.paymentMessage = 'An error occurred. Please try again.';
+                            this.paymentMessageType = 'error';
+                            console.error('Error:', error);
+                        });
+                    },
                     
                     cancelSubscription() {
                         this.loading = true;
@@ -435,6 +599,100 @@ class MembershipStatus {
                 ]);
             } else {
                 wp_send_json_error(['message' => 'Failed to cancel subscription. Please try again.']);
+            }
+        } catch (Exception $e) {
+            wp_send_json_error(['message' => 'Error: ' . $e->getMessage()]);
+        }
+        
+        exit;
+    }
+    
+    /**
+     * Handle AJAX payment method update requests
+     */
+    public function handle_update_payment_ajax() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'square-alpine-membership-nonce')) {
+            wp_send_json_error(['message' => 'Invalid security token.']);
+            exit;
+        }
+        
+        // Check for required fields
+        if (!isset($_POST['subscription_id']) || empty($_POST['subscription_id'])) {
+            wp_send_json_error(['message' => 'Subscription ID is required.']);
+            exit;
+        }
+        
+        if (!isset($_POST['card_token']) || empty($_POST['card_token'])) {
+            wp_send_json_error(['message' => 'Card token is required.']);
+            exit;
+        }
+        
+        // Get user ID
+        $user_id = get_current_user_id();
+        if (!$user_id) {
+            wp_send_json_error(['message' => 'You must be logged in to update your payment method.']);
+            exit;
+        }
+        
+        // Verify that the subscription belongs to this user
+        $user_subscription_id = get_user_meta($user_id, 'square_subscription_id', true);
+        if ($user_subscription_id !== $_POST['subscription_id']) {
+            wp_send_json_error(['message' => 'You do not have permission to update this subscription.']);
+            exit;
+        }
+        
+        try {
+            // Get the customer ID
+            $customer_id = get_user_meta($user_id, 'square_customer_id', true);
+            if (empty($customer_id)) {
+                wp_send_json_error(['message' => 'Customer ID not found.']);
+                exit;
+            }
+            
+            // Get Square service
+            $square_service = SquareService::get_instance();
+            
+            // Add the new card to the customer
+            $card_token = sanitize_text_field($_POST['card_token']);
+            $card_result = $square_service->addCardToCustomer($customer_id, $card_token);
+            
+            if (!$card_result) {
+                wp_send_json_error(['message' => 'Failed to add new payment method.']);
+                exit;
+            }
+            
+            // Get the card ID from the result
+            $card_id = $card_result->getId();
+            
+            // Update the subscription with the new card
+            $subscription_id = sanitize_text_field($_POST['subscription_id']);
+            $update_result = $square_service->updateSubscriptionPaymentMethod($subscription_id, $card_id);
+            
+            if ($update_result) {
+                // Update the card ID in user meta
+                update_user_meta($user_id, 'square_card_id', $card_id);
+                
+                wp_send_json_success([
+                    'message' => 'Your payment method has been successfully updated.',
+                    'card' => [
+                        'id' => $card_id,
+                        'brand' => $card_result->getCardBrand(),
+                        'last4' => $card_result->getLast4(),
+                        'exp_month' => $card_result->getExpMonth(),
+                        'exp_year' => $card_result->getExpYear()
+                    ]
+                ]);
+            } else {
+                // If the subscription update failed, try to delete the card we just added
+                try {
+                    $square_service->deleteCustomerCard($customer_id, $card_id);
+                } catch (Exception $delete_error) {
+                    // Just log this error, don't stop execution
+                    error_log('Failed to delete card after failed subscription update: ' . $delete_error->getMessage());
+                }
+                
+                wp_send_json_error(['message' => 'Failed to update subscription payment method.']);
             }
         } catch (Exception $e) {
             wp_send_json_error(['message' => 'Error: ' . $e->getMessage()]);

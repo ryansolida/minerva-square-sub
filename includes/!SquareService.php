@@ -553,4 +553,35 @@ class SquareService
             error_log('SquareService Info: ' . $message . (empty($context) ? '' : ' ' . json_encode($context)));
         }
     }
+    
+    /**
+     * Update a subscription's payment method
+     *
+     * @param string $subscriptionId The subscription ID to update
+     * @param string $cardId The new card ID to use for payment
+     * @return bool True if successful, false otherwise
+     * @throws Exception
+     */
+    public function updateSubscriptionPaymentMethod(string $subscriptionId, string $cardId)
+    {
+        try {
+            $data = [
+                'subscription' => [
+                    'card_id' => $cardId
+                ]
+            ];
+            
+            $result = $this->makeApiRequest('PUT', "/subscriptions/{$subscriptionId}", $data);
+            
+            if (isset($result['subscription'])) {
+                return true;
+            } else {
+                $this->log_error('Failed to update subscription payment method: ' . json_encode($result));
+                throw new Exception('Failed to update subscription payment method: ' . json_encode($result));
+            }
+        } catch (Exception $e) {
+            $this->log_error('Error updating subscription payment method: ' . $e->getMessage());
+            throw $e;
+        }
+    }
 }
