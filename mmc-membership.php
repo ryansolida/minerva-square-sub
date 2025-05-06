@@ -127,9 +127,10 @@ class SquareServicePlugin {
     
     public function init() {
         
-        // Add settings page
+        // Add admin pages
         if (is_admin()) {
             require_once plugin_dir_path(__FILE__) . 'admin/settings.php';
+            require_once plugin_dir_path(__FILE__) . 'admin/member-management.php';
         }
         
         // Initialize Elementor integration if Elementor is active

@@ -114,15 +114,28 @@ class MMCMembershipSettings {
     }
     
     /**
-     * Add options page to admin menu
+     * Add MMC Memberships menu and settings page
      */
     public function add_admin_menu() {
-        add_options_page(
-            'MMC Membership Settings', 
-            'MMC Membership', 
-            'manage_options', 
-            'square-service', 
-            array($this, 'display_settings_page')
+        // Add top-level admin menu
+        add_menu_page(
+            'MMC Memberships', // Page title
+            'MMC Memberships', // Menu title
+            'manage_options', // Capability
+            'mmc-memberships', // Menu slug
+            null, // Function - we don't need a default page callback
+            'dashicons-groups', // Icon
+            30 // Position
+        );
+        
+        // Add settings as submenu
+        add_submenu_page(
+            'mmc-memberships', // Parent slug
+            'Settings', // Page title
+            'Settings', // Menu title
+            'manage_options', // Capability
+            'mmc-memberships', // Menu slug - same as parent to make it the default page
+            array($this, 'display_settings_page') // Callback function
         );
     }
     
@@ -132,7 +145,7 @@ class MMCMembershipSettings {
     public function register_settings() {
         // Register settings group
         register_setting(
-            'square_service', 
+            'mmc-memberships', 
             'square_service_access_token', 
             array(
                 'sanitize_callback' => 'sanitize_text_field'
@@ -140,7 +153,7 @@ class MMCMembershipSettings {
         );
         
         register_setting(
-            'square_service', 
+            'mmc-memberships', 
             'square_service_application_id', 
             array(
                 'sanitize_callback' => 'sanitize_text_field'
@@ -148,7 +161,7 @@ class MMCMembershipSettings {
         );
         
         register_setting(
-            'square_service', 
+            'mmc-memberships', 
             'square_service_environment', 
             array(
                 'sanitize_callback' => 'sanitize_text_field',
@@ -157,7 +170,7 @@ class MMCMembershipSettings {
         );
         
         register_setting(
-            'square_service', 
+            'mmc-memberships', 
             'square_service_default_plan_id', 
             array(
                 'sanitize_callback' => 'sanitize_text_field'
@@ -166,7 +179,7 @@ class MMCMembershipSettings {
         
         // Register the signup page ID setting
         register_setting(
-            'square_service',
+            'mmc-memberships',
             'square_service_signup_page_id',
             array(
                 'sanitize_callback' => 'absint',
@@ -178,14 +191,14 @@ class MMCMembershipSettings {
             'square_service_section', 
             'API Configuration', 
             array($this, 'section_callback'), 
-            'square_service'
+            'mmc-memberships'
         );
         
         add_settings_field(
             'square_service_access_token', 
             'Access Token', 
             array($this, 'access_token_callback'), 
-            'square_service', 
+            'mmc-memberships', 
             'square_service_section'
         );
         
@@ -193,7 +206,7 @@ class MMCMembershipSettings {
             'square_service_application_id', 
             'Application ID', 
             array($this, 'application_id_callback'), 
-            'square_service', 
+            'mmc-memberships', 
             'square_service_section'
         );
         
@@ -201,7 +214,7 @@ class MMCMembershipSettings {
             'square_service_default_plan_id', 
             'Default Subscription Plan ID', 
             array($this, 'default_plan_id_callback'), 
-            'square_service', 
+            'mmc-memberships', 
             'square_service_section'
         );
         
@@ -209,7 +222,7 @@ class MMCMembershipSettings {
             'square_service_location_id', 
             'Location ID', 
             array($this, 'location_id_callback'), 
-            'square_service', 
+            'mmc-memberships', 
             'square_service_section'
         );
         
@@ -217,7 +230,7 @@ class MMCMembershipSettings {
             'square_service_environment', 
             'Environment', 
             array($this, 'environment_callback'), 
-            'square_service', 
+            'mmc-memberships', 
             'square_service_section'
         );
         
@@ -226,7 +239,7 @@ class MMCMembershipSettings {
             'square_service_membership_section',
             'Membership Settings',
             array($this, 'membership_section_callback'),
-            'square_service'
+            'mmc-memberships'
         );
         
         // Add signup page field
@@ -234,7 +247,7 @@ class MMCMembershipSettings {
             'square_service_signup_page_id',
             'Membership Signup Page',
             array($this, 'signup_page_callback'),
-            'square_service',
+            'mmc-memberships',
             'square_service_membership_section'
         );
     }
@@ -341,11 +354,11 @@ class MMCMembershipSettings {
     public function display_settings_page() {
         ?>
         <div class="wrap">
-            <h1>MMC Membership Settings</h1>
+            <h1>MMC Memberships Settings</h1>
             <form method="post" action="options.php">
                 <?php
-                settings_fields('square_service');
-                do_settings_sections('square_service');
+                settings_fields('mmc-memberships');
+                do_settings_sections('mmc-memberships');
                 submit_button();
                 ?>
             </form>
