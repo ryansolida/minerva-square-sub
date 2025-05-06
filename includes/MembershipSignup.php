@@ -1,18 +1,12 @@
 <?php
-/**
- * Square Subscription Form with Alpine.js
- * 
- * A standalone shortcode to display a Square subscription form
- * with reactive UI powered by Alpine.js
- */
+namespace MMCMembership;
 
- 
 // Prevent direct access
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class SquareSubscriptionAlpine {
+class MembershipSignup {
     private static $instance = null;
     
     /**
@@ -30,29 +24,8 @@ class SquareSubscriptionAlpine {
      */
     private function __construct() {
         add_shortcode('membership_signup', array($this, 'render_shortcode'));
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
-        add_action('wp_ajax_square_alpine_subscribe', array($this, 'handle_subscription_ajax'));
-        add_action('wp_ajax_nopriv_square_alpine_subscribe', array($this, 'handle_subscription_ajax'));
-    }
-    
-    /**
-     * Enqueue necessary scripts and styles
-     */
-    public function enqueue_scripts() {
-        // Only enqueue on pages with our shortcode
-        global $post;
-        if (!is_a($post, 'WP_Post') || !has_shortcode($post->post_content, 'square_alpine_subscription')) {
-            return;
-        }
-        
-        // Enqueue Alpine.js
-        wp_enqueue_script('alpinejs', 'https://cdn.jsdelivr.net/npm/alpinejs@3.12.0/dist/cdn.min.js', array(), null, true);
-        
-        // Enqueue Square Web Payments SDK
-        wp_enqueue_script('square-web-payments-sdk', 'https://sandbox.web.squarecdn.com/v1/square.js', array(), null, true);
-        
-        // Enqueue Tailwind CSS
-        wp_enqueue_style('tailwindcss', 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css', array(), null);
+        add_action('wp_ajax_membership_subscribe', array($this, 'handle_subscription_ajax'));
+        add_action('wp_ajax_nopriv_membership_subscribe', array($this, 'handle_subscription_ajax'));
     }
     
     /**
@@ -71,7 +44,7 @@ class SquareSubscriptionAlpine {
             'description' => 'Join our exclusive club for just $8.99/month',
             'plan_id' => get_option('square_service_default_plan_id', ''),
             'redirect_url' => ''
-        ), $atts, 'square_alpine_subscription');
+        ), $atts, 'membership_subscription');
         
         // Check if Square credentials are set
         if (empty($application_id) || empty($location_id)) {
@@ -259,7 +232,7 @@ class SquareSubscriptionAlpine {
                         try {
                             // Create form data for submission
                             const formData = new FormData();
-                            formData.append('action', 'square_alpine_subscribe');
+                            formData.append('action', 'membership_subscribe');
                             formData.append('nonce', config.nonce);
                             formData.append('source_id', token);
                             formData.append('plan_id', config.planId);
@@ -348,10 +321,12 @@ class SquareSubscriptionAlpine {
         }
 
         try {
-
+            // Get API credentials
+            $access_token = get_option('square_service_access_token', '');
+            $environment = get_option('square_service_environment', 'sandbox');
             
-            // Get Square service
-            $square_service = $this->get_square_service();
+            // Create service instance
+            $square_service = new SquareService($access_token, $environment === 'production');
             
             // Get customer ID or create one
             $customer_id = get_user_meta($user_id, 'square_customer_id', true);
@@ -412,26 +387,7 @@ class SquareSubscriptionAlpine {
         exit;
     }
     
-    /**
-     * Get Square service instance
-     */
-    private function get_square_service() {
-        // Make sure SquareService class is loaded
-        if (!class_exists('SquareService')) {
-            require_once dirname(__FILE__) . '/SquareService.php';
-        }
-        
-        // Get API credentials
-        $access_token = get_option('square_service_access_token', '');
-        $environment = get_option('square_service_environment', 'sandbox');
-        
-        // Create service instance
-        return new SquareService($access_token, $environment === 'production');
-    }
 }
 
 // Initialize the shortcode
-function square_alpine_subscription_init() {
-    return SquareSubscriptionAlpine::get_instance();
-}
-square_alpine_subscription_init();
+$membership_signup = MembershipSignup::get_instance();

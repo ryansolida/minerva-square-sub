@@ -1,4 +1,5 @@
 <?php
+namespace MMCMembership;
 /**
  * User-related functions for Square Service
  * 
@@ -13,7 +14,7 @@ if (!defined('ABSPATH')) {
 /**
  * Square Service User Functions
  */
-class SquareServiceUser {
+class UserFunctions {
     
     /**
      * Initialize user-related hooks
@@ -166,4 +167,4 @@ class SquareServiceUser {
 }
 
 // Initialize user functions
-SquareServiceUser::init();
+UserFunctions::init();

@@ -1,13 +1,11 @@
 <?php
+
+namespace MMCMembership;
 /**
  * Square Service for WordPress
  * 
  * Provides functionality for interacting with the Square API without Laravel dependencies
  */
-
-// Using WordPress HTTP API instead of Guzzle
-use Square\SquareClient;
-
 class SquareService
 {
     protected $client;
@@ -27,43 +25,39 @@ class SquareService
      * @param string $accessToken Square API access token
      * @param bool $production Whether to use production environment
      */
-    public function __construct($accessToken = null, $production = false)
+    public function __construct()
     {
         // If no access token provided, try to get from WordPress options
-        if (empty($accessToken)) {
-            $accessToken = get_option('square_service_access_token');
-        }
+        $accessToken = get_option('square_service_access_token');
         
         if (empty($accessToken)) {
             throw new Exception('Square API access token is required');
         }
+
+        $production = get_option('square_service_environment', 'sandbox') === 'production';
         
         // Set production environment if requested
         if ($production) {
             $this->baseUrl = 'https://connect.squareup.com/v2';
         }
-        
-        // Initialize Square client if available
-        if (class_exists('Square\SquareClient')) {
-            $options = $production ? ['environment' => 'production'] : ['environment' => 'sandbox'];
-            $options['accessToken'] = $accessToken;
-            $this->client = new SquareClient($options);
-        }
     }
-    
+
     /**
-     * Get the Square SDK client instance
+     * Get the singleton instance of the SquareService
      *
-     * @return SquareClient The Square SDK client
-     * @throws Exception If the client is not initialized
+     * @param string $accessToken Square API access token
+     * @param bool $production Whether to use production environment
+     * @return SquareService
      */
-    public function getClient()
+    public static function get_instance()
     {
-        if (!$this->client) {
-            throw new Exception('Square client is not initialized');
+        static $instance = null;
+        
+        if ($instance === null) {
+            $instance = new self();
         }
         
-        return $this->client;
+        return $instance;
     }
     
     /**

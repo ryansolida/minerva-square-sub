@@ -6,12 +6,14 @@
  * with reactive UI powered by Alpine.js
  */
 
+namespace MMCMembership;
+
 // Prevent direct access
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class SquareMembershipStatusAlpine {
+class MembershipStatus {
     private static $instance = null;
     
     /**
@@ -29,25 +31,7 @@ class SquareMembershipStatusAlpine {
      */
     private function __construct() {
         add_shortcode('membership_status', array($this, 'render_shortcode'));
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
-        add_action('wp_ajax_square_alpine_cancel_subscription', array($this, 'handle_cancel_ajax'));
-    }
-    
-    /**
-     * Enqueue necessary scripts and styles
-     */
-    public function enqueue_scripts() {
-        // Only enqueue on pages with our shortcode
-        global $post;
-        if (!is_a($post, 'WP_Post') || !has_shortcode($post->post_content, 'square_alpine_membership')) {
-            return;
-        }
-        
-        // Enqueue Alpine.js from CDN
-        wp_enqueue_script('alpinejs', 'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js', array(), null, true);
-        
-        // Enqueue Tailwind CSS
-        wp_enqueue_style('tailwindcss', 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css', array(), null);
+        add_action('wp_ajax_cancel_subscription', array($this, 'handle_cancel_ajax'));
     }
     
     /**
@@ -100,7 +84,7 @@ class SquareMembershipStatusAlpine {
         }
         
         try {
-            $square_service = $this->get_square_service();
+            $square_service = SquareService::get_instance();
             $cards = $square_service->getCustomerCards($customer_id);
             
             foreach ($cards as $card) {
@@ -119,13 +103,6 @@ class SquareMembershipStatusAlpine {
         }
         
         return null;
-    }
-    
-    /**
-     * Get a Square service instance
-     */
-    private function get_square_service() {
-        return new SquareService();
     }
     
     /**
@@ -157,7 +134,7 @@ class SquareMembershipStatusAlpine {
             'upgrade_button_text' => 'Upgrade Your Membership',
             'manage_payment_text' => 'Manage Payment Methods',
             'payment_methods_url' => ''
-        ), $atts, 'square_alpine_membership');
+        ), $atts, 'membership');
         
         // Check if user is logged in
         if (!is_user_logged_in()) {
@@ -334,7 +311,7 @@ class SquareMembershipStatusAlpine {
                                 'Content-Type': 'application/x-www-form-urlencoded',
                             },
                             body: new URLSearchParams({
-                                action: 'square_alpine_cancel_subscription',
+                                action: 'cancel_subscription',
                                 subscription_id: this.subscriptionId,
                                 nonce: this.nonce
                             })
@@ -409,7 +386,7 @@ class SquareMembershipStatusAlpine {
             $customer_id = get_user_meta($user_id, 'square_customer_id', true);
             
             // Cancel the subscription in Square
-            $square_service = $this->get_square_service();
+            $square_service = SquareService::get_instance();
             $subscription_id = sanitize_text_field($_POST['subscription_id']);
             $result = $square_service->cancelSubscription($subscription_id);
             
@@ -444,8 +421,5 @@ class SquareMembershipStatusAlpine {
 }
 
 // Initialize the shortcode
-function square_membership_status_alpine() {
-    return SquareMembershipStatusAlpine::get_instance();
-}
+$membership_status = MembershipStatus::get_instance();
 
-square_membership_status_alpine();

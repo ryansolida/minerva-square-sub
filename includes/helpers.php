@@ -1,6 +1,6 @@
 <?php
 /**
- * Helper functions for Square Service plugin
+ * Helper functions for MMC Memberhip plugin
  */
 
 // Prevent direct access

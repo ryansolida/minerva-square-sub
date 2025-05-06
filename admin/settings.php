@@ -1,6 +1,6 @@
 <?php
 /**
- * Square Service Settings Page
+ * MMC Membership Settings Page
  */
 
 // Prevent direct access
@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class SquareServiceSettings {
+class MMCMembershipSettings {
     private static $instance = null;
     
     // Singleton pattern
@@ -118,8 +118,8 @@ class SquareServiceSettings {
      */
     public function add_admin_menu() {
         add_options_page(
-            'Square Service Settings', 
-            'Square Service', 
+            'MMC Membership Settings', 
+            'MMC Membership', 
             'manage_options', 
             'square-service', 
             array($this, 'display_settings_page')
@@ -283,7 +283,7 @@ class SquareServiceSettings {
     public function display_settings_page() {
         ?>
         <div class="wrap">
-            <h1>Square Service Settings</h1>
+            <h1>MMC Membership Settings</h1>
             <form method="post" action="options.php">
                 <?php
                 settings_fields('square_service');
@@ -339,8 +339,4 @@ class SquareServiceSettings {
 }
 
 // Initialize the settings page
-function square_service_settings() {
-    return SquareServiceSettings::get_instance();
-}
-
-square_service_settings();
+$mmc_membership_setings = MMCMembershipSettings::get_instance();
