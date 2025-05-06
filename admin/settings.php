@@ -3,6 +3,8 @@
  * MMC Membership Settings Page
  */
 
+use MMCMembership\SquareService;
+
 // Prevent direct access
 if (!defined('ABSPATH')) {
     exit;
@@ -26,6 +28,8 @@ class MMCMembershipSettings {
         add_action('admin_init', array($this, 'register_settings'));
         // Register AJAX handler for testing connection
         add_action('wp_ajax_square_service_test_connection', array($this, 'ajax_test_connection'));
+        // Register AJAX handler for testing Constant Contact connection
+        add_action('wp_ajax_mmc_membership_test_cc_connection', array($this, 'ajax_test_cc_connection'));
     }
     
     /**
@@ -40,7 +44,7 @@ class MMCMembershipSettings {
         try {
             // Test by creating a dummy customer - this will throw an exception if connection fails
             // We'll use a method that we know is public in the SquareService class
-            $square_service = get_square_service();
+            $square_service = SquareService::get_instance();
             
             // Create a test customer with a unique email to avoid duplicates
             $test_email = 'test_' . time() . '@example.com';
@@ -63,39 +67,6 @@ class MMCMembershipSettings {
             if ($customer_id) {
                 // Success - connection works!
                 echo '<strong>Connection successful!</strong> Created a test customer with ID: ' . esc_html($customer_id) . '<br>';
-                
-                // Now try to get locations
-                try {
-                    // Use the Square SDK client directly
-                    $locations_api = $square_service->getClient()->getLocationsApi();
-                    $locations_result = $locations_api->listLocations();
-                    
-                    if ($locations_result->isSuccess()) {
-                        $locations = $locations_result->getResult()->getLocations();
-                        $location_count = count($locations);
-                        
-                        echo 'Found ' . $location_count . ' location(s):<br>';
-                        echo '<ul style="margin-left: 15px; list-style-type: disc;">';
-                        
-                        foreach ($locations as $location) {
-                            echo '<li>' . esc_html($location->getName()) . ' (ID: ' . esc_html($location->getId()) . ')</li>';
-                        }
-                        echo '</ul>';
-                        
-                        // Location ID help
-                        $current_location_id = get_option('square_service_location_id');
-                        if (empty($current_location_id) && $location_count > 0) {
-                            $first_location_id = $locations[0]->getId();
-                            if (!empty($first_location_id)) {
-                                echo '<p><strong>Tip:</strong> You can use <code>' . esc_html($first_location_id) . '</code> as your Location ID.</p>';
-                            }
-                        }
-                    } else {
-                        echo '<p>Connection works, but could not retrieve location list. Basic functionality should still work.</p>';
-                    }
-                } catch (Exception $e) {
-                    echo '<p>Note: Connection established but unable to retrieve locations. Basic functionality should still work.</p>';
-                }
                 
                 // Cleanup: Delete the test customer now that we've confirmed connectivity
                 if ($square_service->deleteCustomer($customer_id)) {
@@ -143,112 +114,116 @@ class MMCMembershipSettings {
      * Register plugin settings
      */
     public function register_settings() {
-        // Register settings group
-        register_setting(
-            'mmc-memberships', 
-            'square_service_access_token', 
-            array(
-                'sanitize_callback' => 'sanitize_text_field'
-            )
-        );
+        register_setting('mmc-memberships', 'mmc_membership_access_token');
+        register_setting('mmc-memberships', 'mmc_membership_application_id');
+        register_setting('mmc-memberships', 'mmc_membership_location_id');
+        register_setting('mmc-memberships', 'mmc_membership_default_plan_id');
+        register_setting('mmc-memberships', 'mmc_membership_environment');
         
-        register_setting(
-            'mmc-memberships', 
-            'square_service_application_id', 
-            array(
-                'sanitize_callback' => 'sanitize_text_field'
-            )
-        );
+        // Register membership settings
+        register_setting('mmc-memberships', 'square_service_signup_page_id');
         
-        register_setting(
-            'mmc-memberships', 
-            'square_service_environment', 
-            array(
-                'sanitize_callback' => 'sanitize_text_field',
-                'default' => 'sandbox'
-            )
-        );
+        // Register Constant Contact settings
+        register_setting('mmc-memberships', 'mmc_membership_cc_api_key');
+        register_setting('mmc-memberships', 'mmc_membership_cc_access_token');
+        register_setting('mmc-memberships', 'mmc_membership_cc_list_id');
         
-        register_setting(
-            'mmc-memberships', 
-            'square_service_default_plan_id', 
-            array(
-                'sanitize_callback' => 'sanitize_text_field'
-            )
-        );
-        
-        // Register the signup page ID setting
-        register_setting(
-            'mmc-memberships',
-            'square_service_signup_page_id',
-            array(
-                'sanitize_callback' => 'absint',
-                'default' => 0
-            )
-        );
-        
+        // Add Square API settings section
         add_settings_section(
-            'square_service_section', 
-            'API Configuration', 
-            array($this, 'section_callback'), 
+            'mmc-memberships-api',
+            'Square API Settings',
+            array($this, 'section_callback'),
             'mmc-memberships'
-        );
-        
-        add_settings_field(
-            'square_service_access_token', 
-            'Access Token', 
-            array($this, 'access_token_callback'), 
-            'mmc-memberships', 
-            'square_service_section'
-        );
-        
-        add_settings_field(
-            'square_service_application_id', 
-            'Application ID', 
-            array($this, 'application_id_callback'), 
-            'mmc-memberships', 
-            'square_service_section'
-        );
-        
-        add_settings_field(
-            'square_service_default_plan_id', 
-            'Default Subscription Plan ID', 
-            array($this, 'default_plan_id_callback'), 
-            'mmc-memberships', 
-            'square_service_section'
-        );
-        
-        add_settings_field(
-            'square_service_location_id', 
-            'Location ID', 
-            array($this, 'location_id_callback'), 
-            'mmc-memberships', 
-            'square_service_section'
-        );
-        
-        add_settings_field(
-            'square_service_environment', 
-            'Environment', 
-            array($this, 'environment_callback'), 
-            'mmc-memberships', 
-            'square_service_section'
         );
         
         // Add membership settings section
         add_settings_section(
-            'square_service_membership_section',
+            'mmc-memberships-general',
             'Membership Settings',
             array($this, 'membership_section_callback'),
             'mmc-memberships'
         );
         
-        // Add signup page field
+        // Add Constant Contact settings section
+        add_settings_section(
+            'mmc-memberships-cc',
+            'Constant Contact Settings',
+            array($this, 'constant_contact_section_callback'),
+            'mmc-memberships'
+        );
+        
+        // Add settings fields
+        add_settings_field(
+            'mmc_membership_access_token',
+            'Access Token',
+            array($this, 'access_token_callback'),
+            'mmc-memberships',
+            'mmc-memberships-api'
+        );
+        
+        add_settings_field(
+            'mmc_membership_application_id',
+            'Application ID',
+            array($this, 'application_id_callback'),
+            'mmc-memberships',
+            'mmc-memberships-api'
+        );
+        
+        add_settings_field(
+            'mmc_membership_location_id',
+            'Location ID',
+            array($this, 'location_id_callback'),
+            'mmc-memberships',
+            'mmc-memberships-api'
+        );
+        
+        add_settings_field(
+            'mmc_membership_default_plan_id',
+            'Default Plan ID',
+            array($this, 'default_plan_id_callback'),
+            'mmc-memberships',
+            'mmc-memberships-api'
+        );
+        
+        add_settings_field(
+            'mmc_membership_environment',
+            'Environment',
+            array($this, 'environment_callback'),
+            'mmc-memberships',
+            'mmc-memberships-api'
+        );
+        
         add_settings_field(
             'square_service_signup_page_id',
-            'Membership Signup Page',
+            'Signup Page',
             array($this, 'signup_page_callback'),
             'mmc-memberships',
-            'square_service_membership_section'
+            'mmc-memberships-general'
+        );
+        
+        // Add Constant Contact settings fields
+        add_settings_field(
+            'mmc_membership_cc_api_key',
+            'API Key',
+            array($this, 'cc_api_key_callback'),
+            'mmc-memberships',
+            'mmc-memberships-cc'
+        );
+        
+        add_settings_field(
+            'mmc_membership_cc_access_token',
+            'Access Token',
+            array($this, 'cc_access_token_callback'),
+            'mmc-memberships',
+            'mmc-memberships-cc'
+        );
+        
+        add_settings_field(
+            'mmc_membership_cc_list_id',
+            'Member Exclusive List',
+            array($this, 'cc_list_id_callback'),
+            'mmc-memberships',
+            'mmc-memberships-cc'
         );
     }
     
@@ -349,6 +324,109 @@ class MMCMembershipSettings {
     }
     
     /**
+     * Constant Contact section introduction
+     */
+    public function constant_contact_section_callback() {
+        echo '<p>Configure Constant Contact integration for your membership system.</p>';
+        echo '<p>This will allow you to automatically add members to your "Member Exclusive" list when their membership is activated, and remove them when their membership is deactivated.</p>';
+    }
+    
+    /**
+     * Constant Contact API Key field
+     */
+    public function cc_api_key_callback() {
+        $api_key = get_option('mmc_membership_cc_api_key', '');
+        echo '<input type="text" name="mmc_membership_cc_api_key" value="' . esc_attr($api_key) . '" class="regular-text" />';
+        echo '<p class="description">Enter your Constant Contact API Key. You can find this in your Constant Contact account under "My Settings" > "API Keys".</p>';
+    }
+    
+    /**
+     * Constant Contact Access Token field
+     */
+    public function cc_access_token_callback() {
+        $access_token = get_option('mmc_membership_cc_access_token', '');
+        echo '<input type="text" name="mmc_membership_cc_access_token" value="' . esc_attr($access_token) . '" class="regular-text" />';
+        echo '<p class="description">Enter your Constant Contact Access Token.</p>';
+    }
+    
+    /**
+     * Constant Contact List ID field
+     */
+    public function cc_list_id_callback() {
+        $list_id = get_option('mmc_membership_cc_list_id', '');
+        $api_key = get_option('mmc_membership_cc_api_key', '');
+        $access_token = get_option('mmc_membership_cc_access_token', '');
+        
+        // Check if API credentials are set
+        if (empty($api_key) || empty($access_token)) {
+            echo '<p class="description">Please enter your Constant Contact API Key and Access Token first, then save settings to see available lists.</p>';
+            echo '<input type="hidden" name="mmc_membership_cc_list_id" value="' . esc_attr($list_id) . '" />';
+            return;
+        }
+        
+        // Try to get lists from Constant Contact
+        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/ConstantContactService.php';
+        $cc_service = new \MMCMembership\ConstantContactService($api_key, $access_token);
+        
+        try {
+            $lists = $cc_service->getLists();
+            
+            if (empty($lists)) {
+                echo '<p class="description">No lists found in your Constant Contact account. Please create a list first.</p>';
+                echo '<input type="hidden" name="mmc_membership_cc_list_id" value="' . esc_attr($list_id) . '" />';
+                return;
+            }
+            
+            // Display dropdown of lists
+            echo '<select name="mmc_membership_cc_list_id" class="regular-text">';
+            echo '<option value="">— Select a list —</option>';
+            
+            foreach ($lists as $list) {
+                $selected = ($list_id === $list['list_id']) ? 'selected="selected"' : '';
+                echo '<option value="' . esc_attr($list['list_id']) . '" ' . $selected . '>';
+                echo esc_html($list['name']);
+                echo '</option>';
+            }
+            
+            echo '</select>';
+            echo '<p class="description">Select your "Member Exclusive" list from Constant Contact.</p>';
+            
+        } catch (\Exception $e) {
+            echo '<p class="description">Error retrieving lists from Constant Contact: ' . esc_html($e->getMessage()) . '</p>';
+            echo '<input type="hidden" name="mmc_membership_cc_list_id" value="' . esc_attr($list_id) . '" />';
+        }
+    }
+    
+    /**
+     * AJAX handler for testing connection to Constant Contact API
+     */
+    public function ajax_test_cc_connection() {
+        // Verify that user has permission
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized access');
+        }
+        
+        try {
+            // Create a new instance of the ConstantContactService
+            require_once plugin_dir_path(dirname(__FILE__)) . 'includes/ConstantContactService.php';
+            $cc_service = new \MMCMembership\ConstantContactService();
+            
+            // Test the connection
+            $result = $cc_service->testConnection();
+            
+            // Return the result as JSON
+            echo json_encode($result);
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error testing connection: ' . $e->getMessage()
+            ]);
+        }
+        
+        wp_die();
+    }
+    
+    /**
      * Display the settings page
      */
     public function display_settings_page() {
@@ -364,10 +442,17 @@ class MMCMembershipSettings {
             </form>
             
             <div class="card">
-                <h2>Testing Connection</h2>
+                <h2>Testing Square Connection</h2>
                 <p>To test your connection to Square API, save your settings and then click the button below:</p>
-                <button id="square-test-connection" class="button button-secondary">Test Connection</button>
+                <button id="square-test-connection" class="button button-secondary">Test Square Connection</button>
                 <div id="square-test-result" style="margin-top: 10px; padding: 10px; display: none;"></div>
+            </div>
+            
+            <div class="card" style="margin-top: 20px;">
+                <h2>Testing Constant Contact Connection</h2>
+                <p>To test your connection to Constant Contact API, save your settings and then click the button below:</p>
+                <button id="cc-test-connection" class="button button-secondary">Test Constant Contact</button>
+                <div id="cc-test-result" style="margin-top: 10px; padding: 10px; display: none;"></div>
             </div>
             
             <script>
@@ -388,14 +473,63 @@ class MMCMembershipSettings {
                                 action: 'square_service_test_connection'
                             },
                             success: function(response) {
-                                $button.prop('disabled', false).text('Test Connection');
+                                $button.prop('disabled', false).text('Test Square Connection');
                                 $result.html(response)
                                     .removeClass('notice-error notice-success')
                                     .addClass(response.includes('successful') ? 'notice-success' : 'notice-error')
                                     .addClass('notice').show();
                             },
                             error: function() {
-                                $button.prop('disabled', false).text('Test Connection');
+                                $button.prop('disabled', false).text('Test Square Connection');
+                                $result.html('Error testing connection. Please check your PHP error logs.')
+                                    .removeClass('notice-success')
+                                    .addClass('notice notice-error').show();
+                            }
+                        });
+                    });
+                    
+                    $('#cc-test-connection').click(function(e) {
+                        e.preventDefault();
+                        
+                        var $button = $(this);
+                        var $result = $('#cc-test-result');
+                        
+                        $button.prop('disabled', true).text('Testing...');
+                        $result.hide();
+                        
+                        $.ajax({
+                            url: ajaxurl,
+                            type: 'POST',
+                            data: {
+                                action: 'mmc_membership_test_cc_connection'
+                            },
+                            success: function(response) {
+                                $button.prop('disabled', false).text('Test Constant Contact');
+                                try {
+                                    var data = JSON.parse(response);
+                                    var html = '<p>' + data.message + '</p>';
+                                    
+                                    if (data.success && data.lists && data.lists.length > 0) {
+                                        html += '<p>Available lists:</p><ul style="margin-left: 15px; list-style-type: disc;">';
+                                        data.lists.forEach(function(list) {
+                                            html += '<li>' + list.name + ' (ID: ' + list.list_id + ')</li>';
+                                        });
+                                        html += '</ul>';
+                                        html += '<p><strong>Tip:</strong> You can use one of these list IDs in the "Member Exclusive List" field.</p>';
+                                    }
+                                    
+                                    $result.html(html)
+                                        .removeClass('notice-error notice-success')
+                                        .addClass(data.success ? 'notice-success' : 'notice-error')
+                                        .addClass('notice').show();
+                                } catch (e) {
+                                    $result.html(response)
+                                        .removeClass('notice-success')
+                                        .addClass('notice notice-error').show();
+                                }
+                            },
+                            error: function() {
+                                $button.prop('disabled', false).text('Test Constant Contact');
                                 $result.html('Error testing connection. Please check your PHP error logs.')
                                     .removeClass('notice-success')
                                     .addClass('notice notice-error').show();
@@ -410,4 +544,4 @@ class MMCMembershipSettings {
 }
 
 // Initialize the settings page
-$mmc_membership_setings = MMCMembershipSettings::get_instance();
+$mmc_membership_settings = MMCMembershipSettings::get_instance();

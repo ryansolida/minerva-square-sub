@@ -22,11 +22,11 @@ class UserFunctions {
      */
     public static function init() {
         // Update subscription status meta on login
-        add_action('wp_login', array(__CLASS__, 'update_membership_status_on_login'), 10, 2);
+        \add_action('wp_login', array(__CLASS__, 'update_membership_status_on_login'), 10, 2);
         
         // Schedule a daily check for all users with subscriptions
-        add_action('init', array(__CLASS__, 'schedule_membership_status_check'));
-        add_action('square_service_daily_membership_check', array(__CLASS__, 'check_all_memberships'));
+        \add_action('init', array(__CLASS__, 'schedule_membership_status_check'));
+        \add_action('square_service_daily_membership_check', array(__CLASS__, 'check_all_memberships'));
     }
     
     /**
@@ -38,12 +38,12 @@ class UserFunctions {
         $force_refresh = isset($_GET['refresh_membership_data']) && $_GET['refresh_membership_data'] === 'true';
         
         // If force refresh is requested, update the current user's membership status
-        if ($force_refresh && is_user_logged_in()) {
-            static::update_user_membership_status(get_current_user_id(), true);
+        if ($force_refresh && \is_user_logged_in()) {
+            static::update_user_membership_status(\get_current_user_id(), true);
         }
 
-        if (!wp_next_scheduled('square_service_daily_membership_check')) {
-            wp_schedule_event(time(), 'daily', 'square_service_daily_membership_check');
+        if (!\wp_next_scheduled('square_service_daily_membership_check')) {
+            \wp_schedule_event(time(), 'daily', 'square_service_daily_membership_check');
         }
     }
     
@@ -65,16 +65,16 @@ class UserFunctions {
      * @return bool True if user has active membership, false otherwise
      */
     public static function update_user_membership_status($user_id, $force_refresh = false) {
-        $subscription_id = get_user_meta($user_id, 'square_subscription_id', true);
+        $subscription_id = \get_user_meta($user_id, 'square_subscription_id', true);
         
         // If no subscription ID exists, ensure the status is false
         if (empty($subscription_id)) {
-            update_user_meta($user_id, 'has_active_membership', false);
+            \update_user_meta($user_id, 'has_active_membership', false);
             return false;
         }
         
         // Get subscription data from user meta (most recent stored data)
-        $subscription_data = get_user_meta($user_id, 'square_subscription_data', true);
+        $subscription_data = \get_user_meta($user_id, 'square_subscription_data', true);
         
         // Check if we need to refresh the subscription data from Square
         $refresh_data = $force_refresh;
@@ -99,12 +99,12 @@ class UserFunctions {
                 $subscription_data = $square_service->getSubscription($subscription_id);
                 
                 // Store the updated subscription data
-                update_user_meta($user_id, 'square_subscription_data', $subscription_data);
-                update_user_meta($user_id, 'square_subscription_data_updated', time());
+                \update_user_meta($user_id, 'square_subscription_data', $subscription_data);
+                \update_user_meta($user_id, 'square_subscription_data_updated', time());
                 
                 // Store the subscription end date (charged_through_date) if available
                 if (isset($subscription_data->charged_through_date)) {
-                    update_user_meta($user_id, 'square_subscription_end_date', $subscription_data->charged_through_date);
+                    \update_user_meta($user_id, 'square_subscription_end_date', $subscription_data->charged_through_date);
                 }
                 
                 // Update membership status based on subscription status
@@ -117,7 +117,7 @@ class UserFunctions {
 
             } catch (Exception $e) {
                 // Log error but continue with existing data
-                error_log('Failed to refresh subscription data: ' . $e->getMessage());
+                \error_log('Failed to refresh subscription data: ' . $e->getMessage());
             }
         }
         
@@ -128,7 +128,7 @@ class UserFunctions {
         }
         
         // Update the user meta
-        update_user_meta($user_id, 'has_active_membership', $is_active);
+        \update_user_meta($user_id, 'has_active_membership', $is_active);
         
         return $is_active;
     }
@@ -138,7 +138,7 @@ class UserFunctions {
      */
     public static function check_all_memberships() {
         // Find all users with subscription IDs
-        $users = get_users(array(
+        $users = \get_users(array(
             'meta_key' => 'square_subscription_id',
             'meta_compare' => 'EXISTS'
         ));
@@ -155,9 +155,12 @@ class UserFunctions {
      * @param array $subscription_data Subscription data
      */
     public static function set_active_membership($user_id, $subscription_data) {
-        update_user_meta($user_id, 'has_active_membership', true);
-        update_user_meta($user_id, 'square_subscription_data', $subscription_data);
-        update_user_meta($user_id, 'square_subscription_data_updated', time());
+        \update_user_meta($user_id, 'has_active_membership', true);
+        \update_user_meta($user_id, 'square_subscription_data', $subscription_data);
+        \update_user_meta($user_id, 'square_subscription_data_updated', time());
+        
+        // Add user to Constant Contact Member Exclusive list
+        self::sync_user_to_constant_contact($user_id, true);
     }
     
     /**
@@ -166,10 +169,13 @@ class UserFunctions {
      * @param int $user_id User ID
      */
     public static function set_inactive_membership($user_id) {
-        update_user_meta($user_id, 'has_active_membership', false);
-        delete_user_meta($user_id, 'square_subscription_id');
-        delete_user_meta($user_id, 'square_subscription_data');
-        delete_user_meta($user_id, 'square_subscription_data_updated');
+        \update_user_meta($user_id, 'has_active_membership', false);
+        \delete_user_meta($user_id, 'square_subscription_id');
+        \delete_user_meta($user_id, 'square_subscription_data');
+        \delete_user_meta($user_id, 'square_subscription_data_updated');
+        
+        // Remove user from Constant Contact Member Exclusive list
+        self::sync_user_to_constant_contact($user_id, false);
     }
     
     /**
@@ -180,7 +186,7 @@ class UserFunctions {
      */
     public static function has_active_membership($user_id = null) {
         if (null === $user_id) {
-            $user_id = get_current_user_id();
+            $user_id = \get_current_user_id();
         }
 
         if (!$user_id) {
@@ -188,7 +194,60 @@ class UserFunctions {
         }
         
         
-        return (bool) get_user_meta($user_id, 'has_active_membership', true);
+        return (bool) \get_user_meta($user_id, 'has_active_membership', true);
+    }
+    
+    /**
+     * Sync user to Constant Contact Member Exclusive list
+     * 
+     * @param int $user_id User ID
+     * @param bool $is_active Whether the membership is active
+     */
+    private static function sync_user_to_constant_contact($user_id, $is_active) {
+        // Check if Constant Contact integration is configured
+        $cc_api_key = \get_option('mmc_membership_cc_api_key', '');
+        $cc_access_token = \get_option('mmc_membership_cc_access_token', '');
+        $cc_list_id = \get_option('mmc_membership_cc_list_id', '');
+        
+        if (empty($cc_api_key) || empty($cc_access_token) || empty($cc_list_id)) {
+            // Constant Contact integration not configured
+            return;
+        }
+        
+        // Get user data
+        $user = \get_userdata($user_id);
+        if (!$user) {
+            return;
+        }
+        
+        // Load Constant Contact service
+        if (!class_exists('\\MMCMembership\\ConstantContactService')) {
+            require_once \plugin_dir_path(dirname(__FILE__)) . 'includes/ConstantContactService.php';
+        }
+        
+        $cc_service = new \MMCMembership\ConstantContactService($cc_api_key, $cc_access_token);
+        
+        if ($is_active) {
+            // Add user to Member Exclusive list
+            $cc_service->addContactToList(
+                $user->user_email,
+                $user->first_name,
+                $user->last_name,
+                $cc_list_id
+            );
+            
+            // Log the action
+            \error_log(sprintf('Added user #%d to Constant Contact Member Exclusive list', $user_id));
+        } else {
+            // Remove user from Member Exclusive list
+            $cc_service->removeContactFromList(
+                $user->user_email,
+                $cc_list_id
+            );
+            
+            // Log the action
+            \error_log(sprintf('Removed user #%d from Constant Contact Member Exclusive list', $user_id));
+        }
     }
 }
 
