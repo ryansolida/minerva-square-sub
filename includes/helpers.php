@@ -123,3 +123,18 @@ function dump($data, $pretty = true) {
 
     echo '</pre>';
 }
+
+/**
+ * Get the URL of the membership signup page
+ * 
+ * @return string The URL of the signup page or empty string if not configured
+ */
+function get_membership_signup_url() {
+    $signup_page_id = get_option('square_service_signup_page_id', 0);
+    
+    if (empty($signup_page_id)) {
+        return '';
+    }
+    
+    return get_permalink($signup_page_id);
+}

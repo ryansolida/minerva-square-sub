@@ -1,5 +1,6 @@
 <?php
 namespace MMCMembership;
+use Exception;
 /**
  * User-related functions for Square Service
  * 
@@ -32,6 +33,15 @@ class UserFunctions {
      * Schedule a daily check for all membership statuses
      */
     public static function schedule_membership_status_check() {
+
+        // Check if we need to force a data refresh via query parameter
+        $force_refresh = isset($_GET['refresh_membership_data']) && $_GET['refresh_membership_data'] === 'true';
+        
+        // If force refresh is requested, update the current user's membership status
+        if ($force_refresh && is_user_logged_in()) {
+            static::update_user_membership_status(get_current_user_id(), true);
+        }
+
         if (!wp_next_scheduled('square_service_daily_membership_check')) {
             wp_schedule_event(time(), 'daily', 'square_service_daily_membership_check');
         }
@@ -51,9 +61,10 @@ class UserFunctions {
      * Check and update the membership status for a specific user
      * 
      * @param int $user_id User ID
+     * @param bool $force_refresh Whether to force a refresh of the subscription data
      * @return bool True if user has active membership, false otherwise
      */
-    public static function update_user_membership_status($user_id) {
+    public static function update_user_membership_status($user_id, $force_refresh = false) {
         $subscription_id = get_user_meta($user_id, 'square_subscription_id', true);
         
         // If no subscription ID exists, ensure the status is false
@@ -66,14 +77,16 @@ class UserFunctions {
         $subscription_data = get_user_meta($user_id, 'square_subscription_data', true);
         
         // Check if we need to refresh the subscription data from Square
-        $refresh_data = false;
-        if (empty($subscription_data)) {
-            $refresh_data = true;
-        } else {
-            // If data is older than 24 hours, refresh it
-            $last_updated = get_user_meta($user_id, 'square_subscription_data_updated', true);
-            if (empty($last_updated) || (time() - $last_updated) > 86400) {
+        $refresh_data = $force_refresh;
+        if (!$refresh_data) {
+            if (empty($subscription_data)) {
                 $refresh_data = true;
+            } else {
+                // If data is older than 24 hours, refresh it
+                $last_updated = get_user_meta($user_id, 'square_subscription_data_updated', true);
+                if (empty($last_updated) || (time() - $last_updated) > 86400) {
+                    $refresh_data = true;
+                }
             }
         }
         
@@ -81,15 +94,27 @@ class UserFunctions {
         if ($refresh_data) {
             try {
                 // Get subscription data from Square API
-                $square_service = get_square_service();
-                // This API call is not implemented in the current SquareService class
-                // It would need to be added to fetch subscription status
-                // For now, we'll just rely on the stored data
+                $square_service = SquareService::get_instance();
                 
-                // Simulating a future API call: 
-                // $subscription_data = $square_service->getSubscription($subscription_id);
-                // update_user_meta($user_id, 'square_subscription_data', $subscription_data);
-                // update_user_meta($user_id, 'square_subscription_data_updated', time());
+                $subscription_data = $square_service->getSubscription($subscription_id);
+                
+                // Store the updated subscription data
+                update_user_meta($user_id, 'square_subscription_data', $subscription_data);
+                update_user_meta($user_id, 'square_subscription_data_updated', time());
+                
+                // Store the subscription end date (charged_through_date) if available
+                if (isset($subscription_data->charged_through_date)) {
+                    update_user_meta($user_id, 'square_subscription_end_date', $subscription_data->charged_through_date);
+                }
+                
+                // Update membership status based on subscription status
+                if ($subscription_data->status === 'ACTIVE') {
+                    self::set_active_membership($user_id, $subscription_data);
+                } else {
+                    self::set_inactive_membership($user_id);
+                }
+
+
             } catch (Exception $e) {
                 // Log error but continue with existing data
                 error_log('Failed to refresh subscription data: ' . $e->getMessage());
@@ -98,8 +123,8 @@ class UserFunctions {
         
         // Determine if subscription is active
         $is_active = false;
-        if (!empty($subscription_data) && isset($subscription_data['status'])) {
-            $is_active = ($subscription_data['status'] === 'ACTIVE');
+        if (!empty($subscription_data) && isset($subscription_data->status)) {
+            $is_active = ($subscription_data->status === 'ACTIVE');
         }
         
         // Update the user meta
@@ -157,10 +182,11 @@ class UserFunctions {
         if (null === $user_id) {
             $user_id = get_current_user_id();
         }
-        
+
         if (!$user_id) {
             return false;
         }
+        
         
         return (bool) get_user_meta($user_id, 'has_active_membership', true);
     }

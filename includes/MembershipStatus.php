@@ -71,6 +71,7 @@ class MembershipStatus {
             'card_id' => $card_id,
             'plan_id' => $plan_id,
             'start_date' => get_user_meta($user_id, 'square_subscription_start_date', true),
+            'end_date' => get_user_meta($user_id, 'square_subscription_end_date', true),
             'status' => $this->user_has_membership() ? 'active' : 'inactive'
         ];
     }
@@ -136,6 +137,11 @@ class MembershipStatus {
             'payment_methods_url' => ''
         ), $atts, 'membership');
         
+        // If no subscribe_url is provided, use the one from settings
+        if (empty($atts['subscribe_url'])) {
+            $atts['subscribe_url'] = get_membership_signup_url();
+        }
+        
         // Check if user is logged in
         if (!is_user_logged_in()) {
             return '<div class="text-red-600 font-semibold">Please <a href="' . wp_login_url(get_permalink()) . '">log in</a> to view membership status.</div>';
@@ -186,11 +192,29 @@ class MembershipStatus {
                         </div>
                     </div>
                     
+                    <?php if (!$is_active && !empty($atts['subscribe_url'])): ?>
+                    <div class="mt-4">
+                        <p class="mb-2 text-gray-600">Your membership is currently inactive. Would you like to reactivate it?</p>
+                        <a href="<?php echo esc_url($atts['subscribe_url']); ?>" class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors duration-200">
+                            Sign Up Again
+                        </a>
+                    </div>
+                    <?php endif; ?>
+                    
                     <?php if (!empty($subscription['start_date'])): ?>
                     <div class="flex mb-2">
                         <div class="font-medium w-32 text-gray-600 flex-shrink-0">Start Date:</div>
                         <div class="text-gray-800">
                             <?php echo esc_html($this->format_date($subscription['start_date'])); ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <?php if ($is_active && !empty($subscription['end_date'])): ?>
+                    <div class="flex mb-2">
+                        <div class="font-medium w-32 text-gray-600 flex-shrink-0">Active Until:</div>
+                        <div class="text-gray-800">
+                            <?php echo esc_html($this->format_date($subscription['end_date'])); ?>
                         </div>
                     </div>
                     <?php endif; ?>
@@ -391,8 +415,8 @@ class MembershipStatus {
             $result = $square_service->cancelSubscription($subscription_id);
             
             if ($result) {
-                // Update user metadata
-                update_user_meta($user_id, 'square_active_membership', 'no');
+                // Call UserFunctions to properly set inactive membership status
+                UserFunctions::set_inactive_membership($user_id);
                 
                 // Delete the card on file if we have both card ID and customer ID
                 if (!empty($card_id) && !empty($customer_id)) {

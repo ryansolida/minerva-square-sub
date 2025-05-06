@@ -141,14 +141,6 @@ class MMCMembershipSettings {
         
         register_setting(
             'square_service', 
-            'square_service_location_id', 
-            array(
-                'sanitize_callback' => 'sanitize_text_field'
-            )
-        );
-        
-        register_setting(
-            'square_service', 
             'square_service_application_id', 
             array(
                 'sanitize_callback' => 'sanitize_text_field'
@@ -169,6 +161,16 @@ class MMCMembershipSettings {
             'square_service_default_plan_id', 
             array(
                 'sanitize_callback' => 'sanitize_text_field'
+            )
+        );
+        
+        // Register the signup page ID setting
+        register_setting(
+            'square_service',
+            'square_service_signup_page_id',
+            array(
+                'sanitize_callback' => 'absint',
+                'default' => 0
             )
         );
         
@@ -217,6 +219,23 @@ class MMCMembershipSettings {
             array($this, 'environment_callback'), 
             'square_service', 
             'square_service_section'
+        );
+        
+        // Add membership settings section
+        add_settings_section(
+            'square_service_membership_section',
+            'Membership Settings',
+            array($this, 'membership_section_callback'),
+            'square_service'
+        );
+        
+        // Add signup page field
+        add_settings_field(
+            'square_service_signup_page_id',
+            'Membership Signup Page',
+            array($this, 'signup_page_callback'),
+            'square_service',
+            'square_service_membership_section'
         );
     }
     
@@ -275,6 +294,45 @@ class MMCMembershipSettings {
         </select>
         <p class="description">Select the Square API environment</p>
         <?php
+    }
+    
+    /**
+     * Membership section introduction
+     */
+    public function membership_section_callback() {
+        echo '<p>Configure membership settings for your site</p>';
+    }
+    
+    /**
+     * Signup page selection
+     */
+    public function signup_page_callback() {
+        $signup_page_id = get_option('square_service_signup_page_id', 0);
+        
+        // Get all published pages
+        $pages = get_pages(array(
+            'post_status' => 'publish',
+            'sort_column' => 'post_title',
+            'sort_order' => 'ASC'
+        ));
+        
+        if (empty($pages)) {
+            echo '<p>No pages found. <a href="' . admin_url('post-new.php?post_type=page') . '">Create a page</a> first.</p>';
+            return;
+        }
+        
+        echo '<select name="square_service_signup_page_id">';
+        echo '<option value="0">— Select a page —</option>';
+        
+        foreach ($pages as $page) {
+            echo '<option value="' . esc_attr($page->ID) . '" ' . selected($signup_page_id, $page->ID, false) . '>';
+            echo esc_html($page->post_title);
+            echo '</option>';
+        }
+        
+        echo '</select>';
+        echo '<p class="description">Select the page where you have placed the membership signup form shortcode.</p>';
+        echo '<p class="description">This page will be used for "Sign Up" links throughout the site.</p>';
     }
     
     /**

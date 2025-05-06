@@ -1,5 +1,6 @@
 <?php
 namespace MMCMembership;
+use Exception;
 
 // Prevent direct access
 if (!defined('ABSPATH')) {
@@ -372,6 +373,9 @@ class MembershipSignup {
             update_user_meta($user_id, 'square_subscription_id', $subscription_data->id);
             update_user_meta($user_id, 'square_subscription_plan_id', $plan_id);
             update_user_meta($user_id, 'square_active_membership', 'yes');
+            
+            // Call UserFunctions to properly set active membership status
+            UserFunctions::set_active_membership($user_id, $subscription_data);
             
             // Return success
             $redirect_url = isset($_POST['redirect_url']) ? esc_url_raw($_POST['redirect_url']) : '';

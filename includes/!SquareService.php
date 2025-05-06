@@ -1,6 +1,7 @@
 <?php
 
 namespace MMCMembership;
+use Exception;
 /**
  * Square Service for WordPress
  * 
@@ -110,7 +111,7 @@ class SquareService
             
             // Check if response is successful
             if ($response_code >= 400) {
-                throw new Exception('Square API Error: ' . wp_remote_retrieve_response_message($response) . ' (Code: ' . $response_code . ')');
+                throw new Exception('Square API Error: endpoint: ' . $endpoint.' - '. wp_remote_retrieve_response_message($response) . ' (Code: ' . $response_code . ')');
             }
             
             // Get and decode the body
