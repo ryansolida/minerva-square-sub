@@ -162,7 +162,14 @@ class MembersOnly {
         // Use the configured signup page URL or fallback to a default
         $signup_url = get_membership_signup_url();
         if (empty($signup_url)) {
-            $signup_url = site_url('/membership-signup/');
+            // Get the membership page ID from settings
+            $membership_page_id = \get_option('mmc_membership_page_id');
+            if ($membership_page_id) {
+                $signup_url = \get_permalink($membership_page_id);
+            } else {
+                // Final fallback if no settings are configured
+                $signup_url = \site_url('/membership-signup/');
+            }
         }
         
         $login_url = wp_login_url(site_url($_SERVER['REQUEST_URI'])); // Current page as redirect

@@ -167,9 +167,11 @@ class MMCMembershipSettings {
         register_setting('mmc-memberships', 'mmc_membership_environment');
         
         // Register membership settings
-        register_setting('mmc-memberships', 'square_service_signup_page_id');
+        register_setting('mmc-memberships', 'mmc_membership_signup_page_id');
         register_setting('mmc-memberships', 'mmc_membership_club_name');
         register_setting('mmc-memberships', 'mmc_membership_price');
+        register_setting('mmc-memberships', 'mmc_membership_login_page_id', array($this, 'validate_page_id'));
+        register_setting('mmc-memberships', 'mmc_membership_account_page_id', array($this, 'validate_page_id'));
         
         // Register Constant Contact settings
         register_setting('mmc-memberships', 'mmc_membership_cc_api_key');
@@ -242,7 +244,7 @@ class MMCMembershipSettings {
         );
         
         add_settings_field(
-            'square_service_signup_page_id',
+            'mmc_membership_signup_page_id',
             'Signup Page',
             array($this, 'signup_page_callback'),
             'mmc-memberships',
@@ -261,6 +263,22 @@ class MMCMembershipSettings {
             'mmc_membership_price',
             'Membership Price',
             array($this, 'membership_price_callback'),
+            'mmc-memberships',
+            'mmc-memberships-general'
+        );
+        
+        add_settings_field(
+            'mmc_membership_login_page_id',
+            'Login Page',
+            array($this, 'login_page_callback'),
+            'mmc-memberships',
+            'mmc-memberships-general'
+        );
+        
+        add_settings_field(
+            'mmc_membership_account_page_id',
+            'Account Page',
+            array($this, 'account_page_callback'),
             'mmc-memberships',
             'mmc-memberships-general'
         );
@@ -399,7 +417,7 @@ class MMCMembershipSettings {
      * Signup page selection
      */
     public function signup_page_callback() {
-        $signup_page_id = get_option('square_service_signup_page_id', 0);
+        $signup_page_id = get_option('mmc_membership_signup_page_id', 0);
         
         // Get all published pages
         $pages = get_pages(array(
@@ -413,8 +431,8 @@ class MMCMembershipSettings {
             return;
         }
         
-        echo '<select name="square_service_signup_page_id">';
-        echo '<option value="0">— Select a page —</option>';
+        echo '<select name="mmc_membership_signup_page_id">';
+        echo '<option value="">-- Select a Page --</option>';
         
         foreach ($pages as $page) {
             echo '<option value="' . esc_attr($page->ID) . '" ' . selected($signup_page_id, $page->ID, false) . '>';
@@ -446,6 +464,135 @@ class MMCMembershipSettings {
         echo '<input type="number" id="mmc_membership_price" name="mmc_membership_price" value="' . esc_attr($price) . '" class="regular-text" step="0.01" min="0.01">';
         echo '</div>';
         echo '<p class="description">The monthly price for membership (e.g., 8.99).</p>';
+    }
+    
+    /**
+     * Login page field
+     */
+    public function login_page_callback() {
+        $page_id = get_option('mmc_membership_login_page_id');
+        
+        // Get all pages
+        $pages = get_pages();
+        
+        echo '<select id="mmc_membership_login_page_id" name="mmc_membership_login_page_id">';
+        echo '<option value="">-- Select a page --</option>';
+        
+        // Add option to create a new page
+        echo '<option value="create_new" ' . selected($page_id, 'create_new', false) . '>Create new page</option>';
+        
+        // List all existing pages
+        foreach ($pages as $page) {
+            echo '<option value="' . esc_attr($page->ID) . '" ' . selected($page_id, $page->ID, false) . '>';
+            echo esc_html($page->post_title);
+            echo '</option>';
+        }
+        
+        echo '</select>';
+        echo '<p class="description">Select the page where users will log in. This page should contain the <code>[mmc_login_form]</code> shortcode.</p>';
+        
+        // If a page is selected but doesn't have the shortcode, show a warning
+        if ($page_id && $page_id !== 'create_new' && is_numeric($page_id)) {
+            $page_content = get_post_field('post_content', $page_id);
+            if (strpos($page_content, '[mmc_login_form') === false) {
+                echo '<p class="description" style="color: #d63638;">Warning: The selected page does not contain the <code>[mmc_login_form]</code> shortcode.</p>';
+            }
+        }
+    }
+    
+    /**
+     * Account page field
+     */
+    public function account_page_callback() {
+        $page_id = get_option('mmc_membership_account_page_id');
+        
+        // Get all pages
+        $pages = get_pages();
+        
+        echo '<select id="mmc_membership_account_page_id" name="mmc_membership_account_page_id">';
+        echo '<option value="">-- Select a page --</option>';
+        
+        // Add option to create a new page
+        echo '<option value="create_new" ' . selected($page_id, 'create_new', false) . '>Create new page</option>';
+        
+        // List all existing pages
+        foreach ($pages as $page) {
+            echo '<option value="' . esc_attr($page->ID) . '" ' . selected($page_id, $page->ID, false) . '>';
+            echo esc_html($page->post_title);
+            echo '</option>';
+        }
+        
+        echo '</select>';
+        echo '<p class="description">Select the page where users will manage their account. This page should contain the <code>[mmc_my_account]</code> shortcode.</p>';
+        
+        // If a page is selected but doesn't have the shortcode, show a warning
+        if ($page_id && $page_id !== 'create_new' && is_numeric($page_id)) {
+            $page_content = get_post_field('post_content', $page_id);
+            if (strpos($page_content, '[mmc_my_account') === false) {
+                echo '<p class="description" style="color: #d63638;">Warning: The selected page does not contain the <code>[mmc_my_account]</code> shortcode.</p>';
+            }
+        }
+    }
+    
+    /**
+     * Validate page ID and create new pages if needed
+     * 
+     * @param string $value The value to validate
+     * @return string|int The validated value
+     */
+    public function validate_page_id($value) {
+        // If the value is 'create_new', create a new page
+        if ($value === 'create_new') {
+            // Determine which page we're creating based on the option name
+            $option_name = current_filter();
+            
+            if ($option_name === 'sanitize_option_mmc_membership_login_page_id') {
+                // Create login page
+                $page_title = 'Login';  
+                $page_content = '[mmc_login_form]';
+            } elseif ($option_name === 'sanitize_option_mmc_membership_account_page_id') {
+                // Create account page
+                $page_title = 'My Account';
+                $page_content = '[mmc_my_account]';
+            } else {
+                // Unknown option, return empty
+                return '';
+            }
+            
+            // Create the page
+            $club_name = get_option('mmc_membership_club_name', 'Minerva Motor Club');
+            $page_data = array(
+                'post_title'    => $club_name . ' ' . $page_title,
+                'post_content'  => $page_content,
+                'post_status'   => 'publish',
+                'post_type'     => 'page',
+            );
+            
+            $page_id = wp_insert_post($page_data);
+            
+            if ($page_id && !is_wp_error($page_id)) {
+                // Return the new page ID
+                add_settings_error(
+                    'mmc-memberships',
+                    'page-created',
+                    sprintf('New %s page created successfully.', $page_title),
+                    'success'
+                );
+                return $page_id;
+            } else {
+                // Failed to create page
+                add_settings_error(
+                    'mmc-memberships',
+                    'page-create-error',
+                    sprintf('Failed to create %s page. Please try again or create it manually.', $page_title),
+                    'error'
+                );
+                return '';
+            }
+        }
+        
+        // Otherwise, just return the value
+        return $value;
     }
     
     /**

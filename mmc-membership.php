@@ -44,6 +44,18 @@ require_once plugin_dir_path(__FILE__) . 'includes/MembershipShortcodes.php';
 
 require_once plugin_dir_path(__FILE__) . 'admin/settings.php';
 
+// Initialize custom login and account functionality
+function mmc_membership_init_custom_pages() {
+    // Initialize custom login functionality
+    new \MMCMembership\CustomLogin();
+    
+    // Initialize my account functionality
+    new \MMCMembership\MyAccount();
+    
+    // Hook account actions processing to init
+    add_action('init', array(new \MMCMembership\MyAccount(), 'process_account_actions'));
+}
+
 /**
  * Enqueue frontend assets (Tailwind CSS and Alpine.js)
  */
@@ -80,7 +92,7 @@ function mmc_membership_enqueue_frontend_assets() {
         true // Load in footer
     );
 }
-add_action('wp_enqueue_scripts', 'mmc_membership_enqueue_frontend_assets');
+add_action('wp_enqueue_scripts', 'mmc_membership_enqueue_frontend_assets',10000000);
 
 /**
  * Check user's Square subscription status on login and sync with WordPress
@@ -234,6 +246,9 @@ function get_mmc_membership($access_token = null) {
 
 // Initialize the plugin
 mmc_membership();
+
+// Initialize custom login and account pages
+add_action('plugins_loaded', 'mmc_membership_init_custom_pages');
 
 // Add custom CSS for Square payment form and Elementor button styles
 add_action('wp_head', 'mmc_membership_add_custom_css');

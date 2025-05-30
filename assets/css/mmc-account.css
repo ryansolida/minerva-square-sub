@@ -1,0 +1,180 @@
+/* MMC Membership Account Styles */
+
+.mmc-account-container {
+    max-width: 800px;
+    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.mmc-account-section {
+    margin-bottom: 40px;
+    padding: 25px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.3s ease;
+}
+
+.mmc-account-section:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.mmc-account-section h3 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 1.4em;
+}
+
+.mmc-account-section h4 {
+    margin-top: 20px;
+    font-size: 1.2em;
+}
+
+.mmc-notice {
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.mmc-notice-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.mmc-notice-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.mmc-form-group {
+    margin-bottom: 20px;
+}
+
+.mmc-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+}
+
+.mmc-form-group input[type="text"],
+.mmc-form-group input[type="email"],
+.mmc-form-group input[type="password"] {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: border-color 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.mmc-form-group input[type="text"]:focus,
+.mmc-form-group input[type="email"]:focus,
+.mmc-form-group input[type="password"]:focus {
+    outline: none;
+    border-color: #0073aa;
+    box-shadow: 0 1px 3px rgba(0, 115, 170, 0.2);
+}
+
+.mmc-button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #0073aa;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    text-align: center;
+    margin-top: 15px;
+    transition: background-color 0.2s ease;
+}
+
+.mmc-button:hover {
+    background-color: #005a87;
+    color: #fff;
+}
+
+.mmc-button-small {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.mmc-button-cancel {
+    background-color: #dc3545;
+}
+
+.mmc-button-cancel:hover {
+    background-color: #bd2130;
+}
+
+.mmc-button-logout {
+    background-color: #6c757d;
+}
+
+.mmc-button-logout:hover {
+    background-color: #5a6268;
+}
+
+.mmc-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+.mmc-status-active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.mmc-status-inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.mmc-payment-methods-list {
+    margin-top: 15px;
+}
+
+.mmc-payment-method {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.mmc-card-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.mmc-card-brand {
+    font-weight: 500;
+}
+
+.mmc-card-last4,
+.mmc-card-expiry {
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+@media (max-width: 600px) {
+    .mmc-payment-method {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .mmc-payment-method-actions {
+        margin-top: 10px;
+    }
+}

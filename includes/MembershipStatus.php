@@ -423,7 +423,26 @@ class MembershipStatus {
             <?php endif; ?>
         </div>
         
-        <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+        <?php \wp_enqueue_script('square-web-payments-sdk', 'https://sandbox.web.squarecdn.com/v1/square.js', array(), null, true); ?>
+        
+        <!-- Add custom CSS to fix button styling -->
+        <style>
+            /* Remove red outline and set consistent focus styles for all buttons */
+            button:focus, 
+            a:focus,
+            .mmc-button:focus,
+            input:focus {
+                outline: none !important;
+                box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.3) !important;
+            }
+            
+            /* Specific style for the Update Payment Method button */
+            .px-4.py-2.bg-blue-600.hover\:bg-blue-700:focus {
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3) !important;
+                outline: none !important;
+            }
+        </style>
+        
         <script>
             document.addEventListener('alpine:init', () => {
                 Alpine.data('membershipStatus', (config) => ({
