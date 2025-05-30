@@ -24,7 +24,6 @@ class MMCMembershipElementor {
     private function __construct() {
         // Register Elementor functionality when Elementor is loaded
         add_action('elementor/dynamic_tags/register', array($this, 'register_dynamic_tags'));
-        add_action('elementor/widgets/register', array($this, 'register_widgets'));
         
         // Register Dynamic Tags Module
         add_action('elementor/dynamic_tags/register_tags', array($this, 'register_tags'));
@@ -70,22 +69,7 @@ class MMCMembershipElementor {
         $dynamic_tags_manager->register(new \MMCMembershipActivationDateTag());
     }
     
-    /**
-     * Register Elementor widgets
-     * 
-     * @param \Elementor\Widgets_Manager $widgets_manager
-     */
-    public function register_widgets($widgets_manager) {
-        // Include widget files
-        require_once __DIR__ . '/widgets/SubscriptionFormWidget.php';
-        require_once __DIR__ . '/widgets/PaymentMethodsWidget.php';
-        require_once __DIR__ . '/widgets/CancelMembershipWidget.php';
-        
-        // Register widgets
-        $widgets_manager->register(new \MMCMembership\Elementor\Widgets\MMCMembershipSubscriptionFormWidget());
-        $widgets_manager->register(new \MMCMembership\Elementor\Widgets\MMCMembershipPaymentMethodsWidget());
-        $widgets_manager->register(new \MMCMembership\Elementor\Widgets\MMCMembershipCancelMembershipWidget());
-    }
+
 }
 
 /**
@@ -103,9 +87,4 @@ add_action('elementor/dynamic_tags/register', function($dynamic_tags_manager) {
 // Register the dynamic tags
 add_action('elementor/dynamic_tags/register_tags', function($dynamic_tags_manager) {
     MMCMembershipElementor::get_instance()->register_tags($dynamic_tags_manager);
-});
-
-// Register the widgets
-add_action('elementor/widgets/register', function($widgets_manager) {
-    MMCMembershipElementor::get_instance()->register_widgets($widgets_manager);
 });

@@ -10,6 +10,7 @@ A comprehensive WordPress membership plugin that integrates with Square for paym
 - **Members-Only Content**: Restrict content to active members only
 - **Elementor Integration**: Dynamic tags for displaying membership information in Elementor templates
 - **Square Payment Processing**: Secure payment processing using Square's Web Payments SDK
+- **Log Out Button**: Convenient log out option on the My Account page
 
 ## Installation
 
@@ -37,9 +38,16 @@ After installation, go to MMC Memberships in your WordPress admin area to config
 The plugin provides several shortcodes to display membership-related content:
 
 - `[mmc_membership_page]`: Displays different content based on user's login and membership status
-- `[mmc_my_account]`: Displays the user account management page
-- `[mmc_new_user_signup_form]`: Displays a registration form with integrated payment
+- `[mmc_my_account]`: Displays the user account management page with profile management and log out options
+- `[mmc_login_form]`: Displays a custom login form
+- `[mmc_signup_form]`: Displays a membership signup form for logged-in users
+- `[mmc_new_user_signup_form]`: Displays a registration form with integrated payment for new users
 - `[members_only]`: Restricts content to active members only
+- `[mmc_has_active_membership]`: Conditional content based on membership status
+- `[mmc_membership_expiration_date]`: Displays the user's membership expiration date
+- `[mmc_membership_activation_date]`: Displays the user's membership activation date
+- `[mmc_membership_next_billing_date]`: Displays the user's next billing date
+- `[mmc_membership_next_billing_price]`: Displays the user's next billing amount
 
 ### Members-Only Content
 
@@ -50,15 +58,17 @@ You can restrict content to members only in two ways:
 
 ### Elementor Integration
 
-The plugin includes several dynamic tags for Elementor:
+The plugin includes several dynamic tags for Elementor under the "MMC Membership" group:
 
-- Membership Status
-- Next Billing Date
-- Next Billing Price
-- Payment Card Info
-- Has Active Membership
-- Membership Expiration Date
-- Membership Activation Date
+- **MMC Membership Status**: Displays the current membership status
+- **MMC Next Billing Date**: Shows when the next payment will be processed
+- **MMC Next Billing Price**: Shows the amount of the next payment
+- **MMC Payment Card Info**: Displays the payment card details
+- **MMC Has Active Membership**: Conditional tag for membership status
+- **MMC Membership Expiration Date**: Shows when the membership expires
+- **MMC Membership Activation Date**: Shows when the membership was activated
+
+These tags can be used in Elementor templates to dynamically display membership information.
 
 ### PHP API
 
@@ -97,6 +107,7 @@ The plugin uses output buffering to generate HTML, making it easy to modify the 
 - PHP 7.2 or higher
 - Square Developer Account
 - SSL Certificate (required for Square payments)
+- Elementor (optional, for dynamic tags)
 
 ## Dependencies
 
