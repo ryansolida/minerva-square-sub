@@ -130,12 +130,15 @@ class MembershipStatus {
         $atts = shortcode_atts(array(
             'title' => 'Membership Status',
             'subscribe_url' => '',
+            'signup_url' => '',
             'cancel_button_text' => 'Cancel Membership',
             'confirm_cancel_text' => 'Yes, Cancel',
             'keep_membership_text' => 'Keep Membership',
             'upgrade_button_text' => 'Upgrade Your Membership',
             'manage_payment_text' => 'Manage Payment Methods',
-            'payment_methods_url' => ''
+            'payment_methods_url' => '',
+            'start_membership_text' => 'Start Membership',
+            'reactivate_text' => 'Reactivate Membership'
         ), $atts, 'membership');
         
         // If no subscribe_url is provided, use the one from settings
@@ -144,23 +147,73 @@ class MembershipStatus {
         }
         
         // Check if user is logged in
-        if (!is_user_logged_in()) {
-            return '<div class="text-red-600 font-semibold">Please <a href="' . wp_login_url(get_permalink()) . '">log in</a> to view membership status.</div>';
+        if (!\is_user_logged_in()) {
+            // Show Sign Up Now button and login link for non-logged in users
+            $signup_url = !empty($atts['signup_url']) ? $atts['signup_url'] : '';
+            
+            if (empty($signup_url)) {
+                // If no signup URL is provided, check if we have a page with the new user signup shortcode
+                $signup_pages = \get_posts([
+                    'post_type' => 'page',
+                    'posts_per_page' => 1,
+                    's' => '[mmc_new_user_signup_form',
+                    'post_status' => 'publish'
+                ]);
+                
+                if (!empty($signup_pages)) {
+                    $signup_url = \get_permalink($signup_pages[0]->ID);
+                }
+            }
+            
+            $output = '<div class="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden p-6">';
+            $output .= '<h2 class="text-2xl font-bold mb-4">Join our Exclusive Club</h2>';
+            $output .= '<p class="text-gray-600 mb-6">Sign up now to access exclusive member benefits for just $' . MMC_MEMBERSHIP_PRICE . '/month.</p>';
+            
+            if (!empty($signup_url)) {
+                $output .= '<a href="' . \esc_url($signup_url) . '" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors mb-4">Sign Up Now</a>';
+            } else {
+                $output .= '<div class="bg-yellow-50 text-yellow-700 p-4 rounded-md border-l-4 border-yellow-500 mb-4">Sign up page not configured. Please contact the administrator.</div>';
+            }
+            
+            $output .= '<div class="text-center mt-4"><p class="text-gray-600">Already have a membership? <a href="' . \wp_login_url(\get_permalink()) . '" class="text-blue-600 hover:text-blue-800">Log in</a></p></div>';
+            $output .= '</div>';
+            
+            return $output;
         }
         
         // Get subscription data
-        $subscription = $this->get_subscription_data();
-        $has_subscription = !empty($subscription);
-        $is_active = $has_subscription && $subscription['status'] === 'active';
+        $subscription_data = $this->get_subscription_data();
         
-        // Get card data if available
-        $card = null;
-        if ($has_subscription && !empty($subscription['card_id']) && !empty($subscription['customer_id'])) {
-            $card = $this->get_card_data($subscription['card_id'], $subscription['customer_id']);
+        // If no subscription data exists, show the start membership form
+        if (!$subscription_data) {
+            return $this->render_start_membership_form($atts);
+        }
+        
+        // If subscription exists but is not active, show reactivation option
+        if ($subscription_data['status'] !== 'active') {
+            return $this->render_reactivate_membership_form($atts, $subscription_data);
         }
         
         // Generate a unique ID for this instance
         $container_id = 'square-alpine-status-' . uniqid();
+        
+        // Set subscription variables
+        $has_subscription = !empty($subscription_data);
+        $is_active = $has_subscription && $subscription_data['status'] === 'active';
+        $subscription = $subscription_data; // For easier access in the template
+        
+        // Get card information if available
+        $card = null;
+        if ($has_subscription && !empty($subscription_data['card_id'])) {
+            // Try to get card details from user meta
+            $user_id = \get_current_user_id();
+            $card = [
+                'brand' => \get_user_meta($user_id, 'square_card_brand', true) ?: 'Card',
+                'last4' => \get_user_meta($user_id, 'square_card_last4', true) ?: '****',
+                'exp_month' => \get_user_meta($user_id, 'square_card_exp_month', true) ?: '**',
+                'exp_year' => \get_user_meta($user_id, 'square_card_exp_year', true) ?: '****'
+            ];
+        }
         
         // Create Alpine.js app with status display
         ob_start();
@@ -190,6 +243,13 @@ class MembershipStatus {
                             <span class="<?php echo $is_active ? 'text-green-600' : 'text-red-600'; ?>">
                                 <?php echo $is_active ? 'Active' : 'Inactive'; ?>
                             </span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex mb-2">
+                        <div class="font-medium w-32 text-gray-600 flex-shrink-0">Monthly Fee:</div>
+                        <div class="text-gray-800">
+                            $<?php echo MMC_MEMBERSHIP_PRICE; ?>/month
                         </div>
                     </div>
                     
@@ -663,7 +723,12 @@ class MembershipStatus {
             }
             
             // Get the card ID from the result
-            $card_id = $card_result->getId();
+            $card_id = $card_result->id ?? '';
+            
+            if (empty($card_id)) {
+                wp_send_json_error(['message' => 'Failed to get card ID from response.']);
+                exit;
+            }
             
             // Update the subscription with the new card
             $subscription_id = sanitize_text_field($_POST['subscription_id']);
@@ -673,14 +738,26 @@ class MembershipStatus {
                 // Update the card ID in user meta
                 update_user_meta($user_id, 'square_card_id', $card_id);
                 
+                // Save card details for display
+                $card_brand = $card_result->card_brand ?? '';
+                $last_4 = $card_result->last_4 ?? '';
+                $exp_month = $card_result->exp_month ?? '';
+                $exp_year = $card_result->exp_year ?? '';
+                
+                // Save card details as user meta
+                update_user_meta($user_id, 'square_card_brand', $card_brand);
+                update_user_meta($user_id, 'square_card_last4', $last_4);
+                update_user_meta($user_id, 'square_card_exp_month', $exp_month);
+                update_user_meta($user_id, 'square_card_exp_year', $exp_year);
+                
                 wp_send_json_success([
                     'message' => 'Your payment method has been successfully updated.',
                     'card' => [
                         'id' => $card_id,
-                        'brand' => $card_result->getCardBrand(),
-                        'last4' => $card_result->getLast4(),
-                        'exp_month' => $card_result->getExpMonth(),
-                        'exp_year' => $card_result->getExpYear()
+                        'brand' => $card_brand,
+                        'last4' => $last_4,
+                        'exp_month' => $exp_month,
+                        'exp_year' => $exp_year
                     ]
                 ]);
             } else {
@@ -699,6 +776,426 @@ class MembershipStatus {
         }
         
         exit;
+    }
+    
+    /**
+     * Render the start membership form for logged-in users without a subscription
+     */
+    private function render_start_membership_form($atts) {
+        // Get Square credentials from settings
+        $application_id = \get_option('square_service_application_id', '');
+        $location_id = \get_option('square_service_location_id', '');
+        $environment = \get_option('square_service_environment', 'sandbox');
+        $plan_id = \get_option('square_service_default_plan_id', '');
+        
+        // Check if Square credentials are set
+        if (empty($application_id) || empty($location_id) || empty($plan_id)) {
+            return '<div class="bg-red-50 text-red-700 p-4 rounded-md border-l-4 border-red-500">Error: Square API credentials or plan ID are not configured. Please contact the administrator.</div>';
+        }
+        
+        // Get current user info
+        $current_user = \wp_get_current_user();
+        $user_email = $current_user->user_email;
+        $user_name = $current_user->display_name;
+        
+        // Generate a unique form ID
+        $form_id = 'square-start-membership-form-' . uniqid();
+        
+        // Create Alpine.js app with the form
+        ob_start();
+        ?>
+        <div class="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden p-6">
+            <h2 class="text-2xl font-bold mb-4">Start Your Membership</h2>
+            <p class="text-gray-600 mb-6">Join our exclusive club for just $<?php echo MMC_MEMBERSHIP_PRICE; ?>/month and get access to premium content and features.</p>
+            
+            <div x-data="{
+                cardholderName: '<?php echo \esc_js($user_name); ?>',
+                cardToken: '',
+                loading: false,
+                errors: {},
+                success: '',
+                squareStatus: 'idle',
+                squareErrors: [],
+                squarePaymentForm: null,
+                squareData: {
+                    applicationId: '<?php echo \esc_js($application_id); ?>',
+                    locationId: '<?php echo \esc_js($location_id); ?>',
+                    planId: '<?php echo \esc_js($plan_id); ?>',
+                    ajaxUrl: '<?php echo \esc_js(\admin_url('admin-ajax.php')); ?>',
+                    nonce: '<?php echo \esc_js(\wp_create_nonce('square-alpine-membership-nonce')); ?>',
+                    email: '<?php echo \esc_js($user_email); ?>'
+                },
+                
+                init() {
+                    // Initialize Square Web Payments SDK
+                    const appId = this.squareData.applicationId;
+                    const locationId = this.squareData.locationId;
+                    
+                    // Check if Square.js is already loaded
+                    if (typeof Square === 'undefined') {
+                        const script = document.createElement('script');
+                        script.src = '<?php echo $environment === 'sandbox' ? 'https://sandbox.web.squarecdn.com/v1/square.js' : 'https://web.squarecdn.com/v1/square.js'; ?>';
+                        script.onload = () => this.initializeSquare(appId, locationId);
+                        document.body.appendChild(script);
+                    } else {
+                        this.initializeSquare(appId, locationId);
+                    }
+                },
+                
+                initializeSquare(appId, locationId) {
+                    // Initialize payments
+                    const payments = Square.payments(appId, locationId);
+                    
+                    // Initialize card
+                    payments.card().then(card => {
+                        this.squarePaymentForm = card;
+                        card.attach('#card-container-start');
+                    }).catch(e => {
+                        console.error('Square initialization error:', e);
+                        this.squareErrors.push('Failed to load payment form: ' + e.message);
+                    });
+                },
+                
+                validateForm() {
+                    this.errors = {};
+                    
+                    // Validate cardholder name
+                    if (!this.cardholderName.trim()) {
+                        this.errors.cardholderName = 'Cardholder name is required';
+                    }
+                    
+                    return Object.keys(this.errors).length === 0;
+                },
+                
+                async submitForm() {
+                    if (!this.validateForm()) {
+                        return;
+                    }
+                    
+                    this.loading = true;
+                    this.squareStatus = 'processing';
+                    
+                    try {
+                        // Get a payment token from Square
+                        const result = await this.squarePaymentForm.tokenize();
+                        
+                        if (result.status === 'OK') {
+                            this.cardToken = result.token;
+                            await this.processPayment(result.token);
+                        } else {
+                            this.squareErrors.push('Payment tokenization failed: ' + result.errors[0].message);
+                            this.squareStatus = 'error';
+                        }
+                    } catch (e) {
+                        console.error('Payment form error:', e);
+                        this.squareErrors.push('Payment form error: ' + e.message);
+                        this.squareStatus = 'error';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                
+                async processPayment(token) {
+                    try {
+                        // Create form data for submission
+                        const formData = new FormData();
+                        formData.append('action', 'membership_subscribe');
+                        formData.append('nonce', this.squareData.nonce);
+                        formData.append('source_id', token);
+                        formData.append('plan_id', this.squareData.planId);
+                        formData.append('cardholder_name', this.cardholderName);
+                        formData.append('email', this.squareData.email);
+                        
+                        // Submit to WordPress AJAX
+                        const response = await fetch(this.squareData.ajaxUrl, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const responseData = await response.json();
+                        
+                        if (responseData.success) {
+                            this.success = responseData.data.message;
+                            this.squareStatus = 'success';
+                            
+                            // Refresh the page after a short delay
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        } else {
+                            this.errors.form = responseData.data.message;
+                            this.squareStatus = 'error';
+                        }
+                    } catch (e) {
+                        console.error('Payment processing error:', e);
+                        this.errors.form = 'An error occurred while processing your payment. Please try again.';
+                        this.squareStatus = 'error';
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            }">
+                <!-- Success message -->
+                <div x-show="success" x-transition class="bg-green-50 text-green-700 p-4 rounded-md border-l-4 border-green-500 mb-4" x-text="success"></div>
+                
+                <!-- Form error message -->
+                <div x-show="errors.form" x-transition class="bg-red-50 text-red-700 p-4 rounded-md border-l-4 border-red-500 mb-4" x-text="errors.form"></div>
+                
+                <!-- Square errors -->
+                <div x-show="squareErrors.length > 0" x-transition class="bg-red-50 text-red-700 p-4 rounded-md border-l-4 border-red-500 mb-4">
+                    <p class="font-bold">Payment Error:</p>
+                    <ul class="list-disc list-inside">
+                        <template x-for="error in squareErrors" :key="error">
+                            <li x-text="error"></li>
+                        </template>
+                    </ul>
+                </div>
+                
+                <form @submit.prevent="submitForm" x-show="!success">
+                    <!-- Cardholder Name field -->
+                    <div class="mb-4">
+                        <label for="cardholder-name" class="block text-gray-700 font-medium mb-2">Cardholder Name</label>
+                        <input type="text" id="cardholder-name" x-model="cardholderName" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{'border-red-500': errors.cardholderName}">
+                        <p x-show="errors.cardholderName" class="text-red-500 text-sm mt-1" x-text="errors.cardholderName"></p>
+                    </div>
+                    
+                    <!-- Square Card Element -->
+                    <div class="mb-6">
+                        <label class="block text-gray-700 font-medium mb-2">Card Details</label>
+                        <div id="card-container-start" class="p-3 border rounded-md min-h-[40px] bg-gray-50"></div>
+                        <p class="text-gray-500 text-sm mt-1">Your card will be charged $8.99/month for your membership.</p>
+                    </div>
+                    
+                    <!-- Submit button -->
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors" :disabled="loading || squareStatus === 'processing'">
+                        <span x-show="!loading && squareStatus !== 'processing'"><?php echo \esc_html($atts['start_membership_text']); ?></span>
+                        <span x-show="loading || squareStatus === 'processing'" class="inline-flex items-center">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Processing...
+                        </span>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+    
+    /**
+     * Render the reactivate membership form for users with inactive subscriptions
+     */
+    private function render_reactivate_membership_form($atts, $subscription_data) {
+        // Get basic subscription info to display
+        $subscription_id = $subscription_data['id'];
+        $plan_id = $subscription_data['plan_id'];
+        
+        // Get Square credentials from settings
+        $application_id = \get_option('square_service_application_id', '');
+        $location_id = \get_option('square_service_location_id', '');
+        $environment = \get_option('square_service_environment', 'sandbox');
+        
+        // Check if Square credentials are set
+        if (empty($application_id) || empty($location_id) || empty($plan_id)) {
+            return '<div class="bg-red-50 text-red-700 p-4 rounded-md border-l-4 border-red-500">Error: Square API credentials or plan ID are not configured. Please contact the administrator.</div>';
+        }
+        
+        // Get current user info
+        $current_user = \wp_get_current_user();
+        $user_email = $current_user->user_email;
+        $user_name = $current_user->display_name;
+        
+        // Generate a unique form ID
+        $form_id = 'square-reactivate-form-' . uniqid();
+        
+        // Create Alpine.js app with the form
+        ob_start();
+        ?>
+        <div class="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden p-6">
+            <h2 class="text-2xl font-bold mb-4">Reactivate Your Membership</h2>
+            <p class="text-gray-600 mb-6">Your membership is currently inactive. Reactivate now to regain access to exclusive content and features.</p>
+            
+            <div class="bg-yellow-50 text-yellow-700 p-4 rounded-md border-l-4 border-yellow-500 mb-4">
+                <p><strong>Previous Subscription:</strong> Inactive</p>
+                <p><strong>Subscription ID:</strong> <?php echo \esc_html(substr($subscription_id, 0, 8) . '...'); ?></p>
+            </div>
+            
+            <div x-data="{
+                cardholderName: '<?php echo \esc_js($user_name); ?>',
+                cardToken: '',
+                loading: false,
+                errors: {},
+                success: '',
+                squareStatus: 'idle',
+                squareErrors: [],
+                squarePaymentForm: null,
+                squareData: {
+                    applicationId: '<?php echo \esc_js($application_id); ?>',
+                    locationId: '<?php echo \esc_js($location_id); ?>',
+                    planId: '<?php echo \esc_js($plan_id); ?>',
+                    ajaxUrl: '<?php echo \esc_js(\admin_url('admin-ajax.php')); ?>',
+                    nonce: '<?php echo \esc_js(\wp_create_nonce('square-alpine-membership-nonce')); ?>',
+                    email: '<?php echo \esc_js($user_email); ?>'
+                },
+                
+                init() {
+                    // Initialize Square Web Payments SDK
+                    const appId = this.squareData.applicationId;
+                    const locationId = this.squareData.locationId;
+                    
+                    // Check if Square.js is already loaded
+                    if (typeof Square === 'undefined') {
+                        const script = document.createElement('script');
+                        script.src = '<?php echo $environment === 'sandbox' ? 'https://sandbox.web.squarecdn.com/v1/square.js' : 'https://web.squarecdn.com/v1/square.js'; ?>';
+                        script.onload = () => this.initializeSquare(appId, locationId);
+                        document.body.appendChild(script);
+                    } else {
+                        this.initializeSquare(appId, locationId);
+                    }
+                },
+                
+                initializeSquare(appId, locationId) {
+                    // Initialize payments
+                    const payments = Square.payments(appId, locationId);
+                    
+                    // Initialize card
+                    payments.card().then(card => {
+                        this.squarePaymentForm = card;
+                        card.attach('#card-container-reactivate');
+                    }).catch(e => {
+                        console.error('Square initialization error:', e);
+                        this.squareErrors.push('Failed to load payment form: ' + e.message);
+                    });
+                },
+                
+                validateForm() {
+                    this.errors = {};
+                    
+                    // Validate cardholder name
+                    if (!this.cardholderName.trim()) {
+                        this.errors.cardholderName = 'Cardholder name is required';
+                    }
+                    
+                    return Object.keys(this.errors).length === 0;
+                },
+                
+                async submitForm() {
+                    if (!this.validateForm()) {
+                        return;
+                    }
+                    
+                    this.loading = true;
+                    this.squareStatus = 'processing';
+                    
+                    try {
+                        // Get a payment token from Square
+                        const result = await this.squarePaymentForm.tokenize();
+                        
+                        if (result.status === 'OK') {
+                            this.cardToken = result.token;
+                            await this.processPayment(result.token);
+                        } else {
+                            this.squareErrors.push('Payment tokenization failed: ' + result.errors[0].message);
+                            this.squareStatus = 'error';
+                        }
+                    } catch (e) {
+                        console.error('Payment form error:', e);
+                        this.squareErrors.push('Payment form error: ' + e.message);
+                        this.squareStatus = 'error';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                
+                async processPayment(token) {
+                    try {
+                        // Create form data for submission
+                        const formData = new FormData();
+                        formData.append('action', 'membership_subscribe');
+                        formData.append('nonce', this.squareData.nonce);
+                        formData.append('source_id', token);
+                        formData.append('plan_id', this.squareData.planId);
+                        formData.append('cardholder_name', this.cardholderName);
+                        formData.append('email', this.squareData.email);
+                        
+                        // Submit to WordPress AJAX
+                        const response = await fetch(this.squareData.ajaxUrl, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const responseData = await response.json();
+                        
+                        if (responseData.success) {
+                            this.success = responseData.data.message;
+                            this.squareStatus = 'success';
+                            
+                            // Refresh the page after a short delay
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        } else {
+                            this.errors.form = responseData.data.message;
+                            this.squareStatus = 'error';
+                        }
+                    } catch (e) {
+                        console.error('Payment processing error:', e);
+                        this.errors.form = 'An error occurred while processing your payment. Please try again.';
+                        this.squareStatus = 'error';
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            }">
+                <!-- Success message -->
+                <div x-show="success" x-transition class="bg-green-50 text-green-700 p-4 rounded-md border-l-4 border-green-500 mb-4" x-text="success"></div>
+                
+                <!-- Form error message -->
+                <div x-show="errors.form" x-transition class="bg-red-50 text-red-700 p-4 rounded-md border-l-4 border-red-500 mb-4" x-text="errors.form"></div>
+                
+                <!-- Square errors -->
+                <div x-show="squareErrors.length > 0" x-transition class="bg-red-50 text-red-700 p-4 rounded-md border-l-4 border-red-500 mb-4">
+                    <p class="font-bold">Payment Error:</p>
+                    <ul class="list-disc list-inside">
+                        <template x-for="error in squareErrors" :key="error">
+                            <li x-text="error"></li>
+                        </template>
+                    </ul>
+                </div>
+                
+                <form @submit.prevent="submitForm" x-show="!success">
+                    <!-- Cardholder Name field -->
+                    <div class="mb-4">
+                        <label for="cardholder-name-reactivate" class="block text-gray-700 font-medium mb-2">Cardholder Name</label>
+                        <input type="text" id="cardholder-name-reactivate" x-model="cardholderName" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{'border-red-500': errors.cardholderName}">
+                        <p x-show="errors.cardholderName" class="text-red-500 text-sm mt-1" x-text="errors.cardholderName"></p>
+                    </div>
+                    
+                    <!-- Square Card Element -->
+                    <div class="mb-6">
+                        <label class="block text-gray-700 font-medium mb-2">Card Details</label>
+                        <div id="card-container-reactivate" class="p-3 border rounded-md min-h-[40px] bg-gray-50"></div>
+                        <p class="text-gray-500 text-sm mt-1">Your card will be charged $8.99/month for your membership.</p>
+                    </div>
+                    
+                    <!-- Submit button -->
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors" :disabled="loading || squareStatus === 'processing'">
+                        <span x-show="!loading && squareStatus !== 'processing'"><?php echo \esc_html($atts['reactivate_text']); ?></span>
+                        <span x-show="loading || squareStatus === 'processing'" class="inline-flex items-center">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Processing...
+                        </span>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
     }
 }
 

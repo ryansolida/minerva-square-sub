@@ -17,7 +17,7 @@ class SquareService
     protected $subscriptionPlanName = 'Exclusive Club Plan';
     protected $subscriptionPlanId = 'ExclusiveClubPlan';
     protected $subscriptionVariationName = 'Exclusive Club';
-    protected $subscriptionPrice = 8.99;
+    protected $subscriptionPrice;
     protected $subscriptionCurrency = 'USD';
     
     /**
@@ -41,6 +41,9 @@ class SquareService
         if ($production) {
             $this->baseUrl = 'https://connect.squareup.com/v2';
         }
+        
+        // Initialize subscription price from constant
+        $this->subscriptionPrice = MMC_MEMBERSHIP_PRICE;
     }
 
     /**

@@ -1,5 +1,12 @@
 <?php
 use MMCMembership\SquareService;
+use MMCMembership\Elementor\Tags\MMCHasActiveMembershipTag;
+use MMCMembership\Elementor\Tags\MMCMembershipExpirationDateTag;
+use MMCMembership\Elementor\Tags\MMCMembershipActivationDateTag;
+use MMCMembership\Elementor\Tags\MMCNextBillingDateTag;
+use MMCMembership\Elementor\Tags\MMCNextBillingPriceTag;
+use MMCMembership\Elementor\Tags\MMCPaymentCardInfoTag;
+use MMCMembership\Elementor\Tags\MMCMembershipStatusTag;
 /**
  * Plugin Name: MMC Membership
  * Description: A service for interacting with the Square API
@@ -12,6 +19,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Define plugin constants
+define('MMC_MEMBERSHIP_PRICE', 8.99);
+
 // Load all PHP files in the includes directory (base level only)
 $includes_dir = plugin_dir_path(__FILE__) . 'includes/';
 $files = glob($includes_dir . '*.php');
@@ -19,6 +29,8 @@ foreach ($files as $file) {
     require_once $file;
 }
 
+// Explicitly include the MembershipShortcodes file
+require_once plugin_dir_path(__FILE__) . 'includes/MembershipShortcodes.php';
 
 require_once plugin_dir_path(__FILE__) . 'admin/settings.php';
 
@@ -135,6 +147,14 @@ class SquareServicePlugin {
         
         // Initialize Elementor integration if Elementor is active
         add_action('elementor/loaded', array($this, 'init_elementor_integration'));
+        
+        // Load direct registration for MMC Membership tags
+        if (did_action('elementor/loaded')) {
+            require_once plugin_dir_path(__FILE__) . 'includes/elementor/direct-register.php';
+            
+            // We no longer need to load the standalone tags as they've been consolidated
+            // into the MMC Membership namespace
+        }
     }
     
     
@@ -142,11 +162,37 @@ class SquareServicePlugin {
      * Initialize Elementor integration
      */
     public function init_elementor_integration() {
-        // Load Elementor integration file
+        // Load debug file first (if needed)
+        require_once plugin_dir_path(__FILE__) . 'includes/elementor/debug.php';
+        
+        // Load the consolidated MMC Membership Elementor integration
         require_once plugin_dir_path(__FILE__) . 'includes/elementor/ElementorIntegration.php';
         
-        // Initialize the integration
-        mmc_membership_elementor();
+        // Directly register the dynamic tags
+        add_action('elementor/dynamic_tags/register', function($dynamic_tags_manager) {
+            // Register tag group
+            $dynamic_tags_manager->register_group('mmc-membership', [
+                'title' => 'MMC Membership'
+            ]);
+            
+            // Include tag classes
+            require_once plugin_dir_path(__FILE__) . 'includes/elementor/tags/MMCHasActiveMembershipTag.php';
+            require_once plugin_dir_path(__FILE__) . 'includes/elementor/tags/MMCMembershipExpirationDateTag.php';
+            require_once plugin_dir_path(__FILE__) . 'includes/elementor/tags/MMCMembershipActivationDateTag.php';
+            require_once plugin_dir_path(__FILE__) . 'includes/elementor/tags/MMCNextBillingDateTag.php';
+            require_once plugin_dir_path(__FILE__) . 'includes/elementor/tags/MMCNextBillingPriceTag.php';
+            require_once plugin_dir_path(__FILE__) . 'includes/elementor/tags/MMCPaymentCardInfoTag.php';
+            require_once plugin_dir_path(__FILE__) . 'includes/elementor/tags/MMCMembershipStatusTag.php';
+            
+            // Register tags
+            $dynamic_tags_manager->register(new \MMCMembership\Elementor\Tags\MMCHasActiveMembershipTag());
+            $dynamic_tags_manager->register(new \MMCMembership\Elementor\Tags\MMCMembershipExpirationDateTag());
+            $dynamic_tags_manager->register(new \MMCMembership\Elementor\Tags\MMCMembershipActivationDateTag());
+            $dynamic_tags_manager->register(new \MMCMembership\Elementor\Tags\MMCNextBillingDateTag());
+            $dynamic_tags_manager->register(new \MMCMembership\Elementor\Tags\MMCNextBillingPriceTag());
+            $dynamic_tags_manager->register(new \MMCMembership\Elementor\Tags\MMCPaymentCardInfoTag());
+            $dynamic_tags_manager->register(new \MMCMembership\Elementor\Tags\MMCMembershipStatusTag());
+        });
     }
     
    

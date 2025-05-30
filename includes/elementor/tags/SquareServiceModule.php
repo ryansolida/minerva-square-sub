@@ -32,6 +32,9 @@ class SquareServiceModule extends \Elementor\Core\DynamicTags\Module {
             'SquareServiceNextBillingDateTag',
             'SquareServiceNextPaymentAmountTag',
             'SquareServicePaymentCardInfoTag',
+            'SquareServiceHasActiveMembershipTag',
+            'SquareServiceMembershipExpirationDateTag',
+            'SquareServiceMembershipActivationDateTag',
         ];
     }
 }

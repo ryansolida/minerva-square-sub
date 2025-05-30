@@ -1,6 +1,6 @@
 <?php
 /**
- * Elementor Integration for Square Service
+ * Elementor Integration for MMC Membership
  *
  * Provides dynamic tags and widgets for Elementor
  */
@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class SquareServiceElementor {
+class MMCMembershipElementor {
     private static $instance = null;
     
     // Singleton pattern
@@ -37,11 +37,11 @@ class SquareServiceElementor {
      */
     public function register_dynamic_tags($dynamic_tags_manager) {
         // Include the Dynamic Tags module
-        require_once __DIR__ . '/tags/SquareServiceModule.php';
+        require_once __DIR__ . '/tags/MMCMembershipModule.php';
         
         // Register the module
-        $dynamic_tags_manager->register_tag_group('square-service', [
-            'title' => 'Square Service'
+        $dynamic_tags_manager->register_tag_group('mmc-membership', [
+            'title' => 'MMC Membership'
         ]);
     }
     
@@ -52,16 +52,22 @@ class SquareServiceElementor {
      */
     public function register_tags($dynamic_tags_manager) {
         // Include tag files
-        require_once __DIR__ . '/tags/MembershipStatusTag.php';
-        require_once __DIR__ . '/tags/NextBillingDateTag.php';
-        require_once __DIR__ . '/tags/NextPaymentAmountTag.php';
-        require_once __DIR__ . '/tags/PaymentCardInfoTag.php';
+        require_once __DIR__ . '/tags/MMCNextBillingDateTag.php';
+        require_once __DIR__ . '/tags/MMCNextBillingPriceTag.php';
+        require_once __DIR__ . '/tags/MMCPaymentCardInfoTag.php';
+        require_once __DIR__ . '/tags/MMCMembershipStatusTag.php';
+        require_once __DIR__ . '/tags/MMCHasActiveMembershipTag.php';
+        require_once __DIR__ . '/tags/MMCMembershipExpirationDateTag.php';
+        require_once __DIR__ . '/tags/MMCMembershipActivationDateTag.php';
         
         // Register the tags
-        $dynamic_tags_manager->register_tag('SquareServiceMembershipStatusTag');
-        $dynamic_tags_manager->register_tag('SquareServiceNextBillingDateTag');
-        $dynamic_tags_manager->register_tag('SquareServiceNextPaymentAmountTag');
-        $dynamic_tags_manager->register_tag('SquareServicePaymentCardInfoTag');
+        $dynamic_tags_manager->register(new \MMCMembershipNextBillingDateTag());
+        $dynamic_tags_manager->register(new \MMCMembershipNextBillingPriceTag());
+        $dynamic_tags_manager->register(new \MMCPaymentCardInfoTag());
+        $dynamic_tags_manager->register(new \MMCMembershipStatusTag());
+        $dynamic_tags_manager->register(new \MMCHasActiveMembershipTag());
+        $dynamic_tags_manager->register(new \MMCMembershipExpirationDateTag());
+        $dynamic_tags_manager->register(new \MMCMembershipActivationDateTag());
     }
     
     /**
@@ -76,15 +82,30 @@ class SquareServiceElementor {
         require_once __DIR__ . '/widgets/CancelMembershipWidget.php';
         
         // Register widgets
-        $widgets_manager->register(new SquareServiceSubscriptionFormWidget());
-        $widgets_manager->register(new SquareServicePaymentMethodsWidget());
-        $widgets_manager->register(new SquareServiceCancelMembershipWidget());
+        $widgets_manager->register(new \MMCMembership\Elementor\Widgets\MMCMembershipSubscriptionFormWidget());
+        $widgets_manager->register(new \MMCMembership\Elementor\Widgets\MMCMembershipPaymentMethodsWidget());
+        $widgets_manager->register(new \MMCMembership\Elementor\Widgets\MMCMembershipCancelMembershipWidget());
     }
 }
 
 /**
  * Initialize Elementor integration
  */
-function square_service_elementor() {
-    return SquareServiceElementor::get_instance();
+function mmc_membership_elementor() {
+    return MMCMembershipElementor::get_instance();
 }
+
+// Initialize the Elementor integration
+add_action('elementor/dynamic_tags/register', function($dynamic_tags_manager) {
+    MMCMembershipElementor::get_instance()->register_dynamic_tags($dynamic_tags_manager);
+});
+
+// Register the dynamic tags
+add_action('elementor/dynamic_tags/register_tags', function($dynamic_tags_manager) {
+    MMCMembershipElementor::get_instance()->register_tags($dynamic_tags_manager);
+});
+
+// Register the widgets
+add_action('elementor/widgets/register', function($widgets_manager) {
+    MMCMembershipElementor::get_instance()->register_widgets($widgets_manager);
+});
