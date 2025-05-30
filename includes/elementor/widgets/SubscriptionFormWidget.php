@@ -75,7 +75,7 @@ class SquareServiceSubscriptionFormWidget extends \Elementor\Widget_Base {
             [
                 'label' => esc_html__('Form Title', 'square-service'),
                 'type' => \Elementor\Controls_Manager::TEXT,
-                'default' => esc_html__('Subscribe to our Exclusive Club', 'square-service'),
+                'default' => sprintf(esc_html__('Subscribe to the %s', 'square-service'), MMC_MEMBERSHIP_CLUB_NAME),
             ]
         );
 
@@ -84,7 +84,7 @@ class SquareServiceSubscriptionFormWidget extends \Elementor\Widget_Base {
             [
                 'label' => esc_html__('Description', 'square-service'),
                 'type' => \Elementor\Controls_Manager::TEXTAREA,
-                'default' => esc_html__('Join our exclusive club for just $8.99/month', 'square-service'),
+                'default' => sprintf(esc_html__('Join the %s for just $%s/month', 'square-service'), strtolower(MMC_MEMBERSHIP_CLUB_NAME), MMC_MEMBERSHIP_PRICE),
             ]
         );
 

@@ -14,9 +14,9 @@ class SquareService
     protected $squareVersion = '2023-09-25';
     
     // Subscription plan configuration
-    protected $subscriptionPlanName = 'Exclusive Club Plan';
+    protected $subscriptionPlanName = MMC_MEMBERSHIP_CLUB_NAME . ' Plan';
     protected $subscriptionPlanId = 'ExclusiveClubPlan';
-    protected $subscriptionVariationName = 'Exclusive Club';
+    protected $subscriptionVariationName = MMC_MEMBERSHIP_CLUB_NAME;
     protected $subscriptionPrice;
     protected $subscriptionCurrency = 'USD';
     

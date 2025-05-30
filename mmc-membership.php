@@ -21,6 +21,7 @@ if (!defined('ABSPATH')) {
 
 // Define plugin constants
 define('MMC_MEMBERSHIP_PRICE', 8.99);
+define('MMC_MEMBERSHIP_CLUB_NAME', 'Exclusive Club');
 
 // Load all PHP files in the includes directory (base level only)
 $includes_dir = plugin_dir_path(__FILE__) . 'includes/';
@@ -224,3 +225,89 @@ function get_mmc_membership($access_token = null) {
 
 // Initialize the plugin
 mmc_membership();
+
+// Add custom CSS for Square payment form and Elementor button styles
+add_action('wp_head', 'mmc_membership_add_custom_css');
+function mmc_membership_add_custom_css() {
+    echo '<style>
+        /* Hide empty Square card messages */
+        .sq-card-message:empty {
+            display: none !important;
+        }
+        
+        /* Apply Elementor button styles to our form buttons */
+        #card-container, #card-container-start, #card-container-reactivate {
+            min-height: 40px;
+        }
+        
+        /* Make our form buttons match Elementor global button styles */
+        .mmc-membership-form button[type="submit"] {
+            display: inline-block;
+            line-height: 1;
+            background-color: var(--e-global-color-accent, #61ce70);
+            font-size: 15px;
+            padding: 12px 24px;
+            border-radius: 3px;
+            color: #fff;
+            fill: #fff;
+            text-align: center;
+            transition: all .3s;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .mmc-membership-form button[type="submit"]:hover {
+            background-color: var(--e-global-color-accent-hover, #4baa56);
+        }
+        
+        .mmc-membership-form button[type="submit"]:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        /* Make our form fields match Elementor global form field styles */
+        .mmc-membership-form input[type="text"],
+        .mmc-membership-form input[type="email"],
+        .mmc-membership-form input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--e-global-color-border, #d5d5d5);
+            border-radius: var(--e-global-border-radius, 3px);
+            color: var(--e-global-color-text, #333);
+            background-color: var(--e-global-color-background, #fff);
+            font-size: var(--e-global-typography-text-font-size, 15px);
+            font-family: var(--e-global-typography-text-font-family, sans-serif);
+            line-height: var(--e-global-typography-text-line-height, 1.5);
+            transition: all .3s;
+        }
+        
+        .mmc-membership-form input[type="text"]:focus,
+        .mmc-membership-form input[type="email"]:focus,
+        .mmc-membership-form input[type="password"]:focus {
+            border-color: var(--e-global-color-primary, #6ec1e4);
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mmc-membership-form label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--e-global-color-text, #333);
+            font-size: var(--e-global-typography-text-font-size, 15px);
+            font-family: var(--e-global-typography-text-font-family, sans-serif);
+            font-weight: 500;
+            line-height: var(--e-global-typography-text-line-height, 1.5);
+        }
+        
+        /* Error styles */
+        .mmc-membership-form .text-red-500,
+        .mmc-membership-form .text-red-600 {
+            color: var(--e-global-color-danger, #d9534f);
+        }
+        
+        /* Success styles */
+        .mmc-membership-form .text-green-600 {
+            color: var(--e-global-color-success, #5cb85c);
+        }
+    </style>';
+}

@@ -166,11 +166,11 @@ class MembershipStatus {
             }
             
             $output = '<div class="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden p-6">';
-            $output .= '<h2 class="text-2xl font-bold mb-4">Join our Exclusive Club</h2>';
+            $output .= '<h2 class="text-2xl font-bold mb-4">Join the ' . MMC_MEMBERSHIP_CLUB_NAME . '</h2>';
             $output .= '<p class="text-gray-600 mb-6">Sign up now to access exclusive member benefits for just $' . MMC_MEMBERSHIP_PRICE . '/month.</p>';
             
             if (!empty($signup_url)) {
-                $output .= '<a href="' . \esc_url($signup_url) . '" class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors mb-4">Sign Up Now</a>';
+                $output .= '<a href="' . \esc_url($signup_url) . '" class="elementor-button elementor-size-md block w-full text-center">Sign Up Now</a>';
             } else {
                 $output .= '<div class="bg-yellow-50 text-yellow-700 p-4 rounded-md border-l-4 border-yellow-500 mb-4">Sign up page not configured. Please contact the administrator.</div>';
             }
@@ -806,7 +806,7 @@ class MembershipStatus {
         ?>
         <div class="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden p-6">
             <h2 class="text-2xl font-bold mb-4">Start Your Membership</h2>
-            <p class="text-gray-600 mb-6">Join our exclusive club for just $<?php echo MMC_MEMBERSHIP_PRICE; ?>/month and get access to premium content and features.</p>
+            <p class="text-gray-600 mb-6">Join the <?php echo strtolower(MMC_MEMBERSHIP_CLUB_NAME); ?> for just $<?php echo MMC_MEMBERSHIP_PRICE; ?>/month and get access to premium content and features.</p>
             
             <div x-data="{
                 cardholderName: '<?php echo \esc_js($user_name); ?>',
@@ -962,8 +962,8 @@ class MembershipStatus {
                     <!-- Square Card Element -->
                     <div class="mb-6">
                         <label class="block text-gray-700 font-medium mb-2">Card Details</label>
-                        <div id="card-container-start" class="p-3 border rounded-md min-h-[40px] bg-gray-50"></div>
-                        <p class="text-gray-500 text-sm mt-1">Your card will be charged $8.99/month for your membership.</p>
+                        <div id="card-container-start" class="min-h-[40px]"></div>
+                        <p class="text-gray-500 text-sm mt-1">Your card will be charged $<?php echo MMC_MEMBERSHIP_PRICE; ?>/month for your membership.</p>
                     </div>
                     
                     <!-- Submit button -->
@@ -1176,8 +1176,8 @@ class MembershipStatus {
                     <!-- Square Card Element -->
                     <div class="mb-6">
                         <label class="block text-gray-700 font-medium mb-2">Card Details</label>
-                        <div id="card-container-reactivate" class="p-3 border rounded-md min-h-[40px] bg-gray-50"></div>
-                        <p class="text-gray-500 text-sm mt-1">Your card will be charged $8.99/month for your membership.</p>
+                        <div id="card-container-reactivate" class="min-h-[40px]"></div>
+                        <p class="text-gray-500 text-sm mt-1">Your card will be charged $<?php echo MMC_MEMBERSHIP_PRICE; ?>/month for your membership.</p>
                     </div>
                     
                     <!-- Submit button -->

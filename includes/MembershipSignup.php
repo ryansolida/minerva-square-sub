@@ -47,8 +47,8 @@ class MembershipSignup {
         // Get shortcode attributes
         $atts = shortcode_atts(array(
             'button_text' => 'Subscribe Now',
-            'title' => 'Subscribe to our Exclusive Club',
-            'description' => 'Join our exclusive club for just $' . MMC_MEMBERSHIP_PRICE . '/month',
+            'title' => 'Subscribe to the ' . MMC_MEMBERSHIP_CLUB_NAME,
+            'description' => 'Join the ' . strtolower(MMC_MEMBERSHIP_CLUB_NAME) . ' for just $' . MMC_MEMBERSHIP_PRICE . '/month',
             'plan_id' => get_option('square_service_default_plan_id', ''),
             'redirect_url' => ''
         ), $atts, 'membership_subscription');
@@ -433,7 +433,7 @@ class MembershipSignup {
         // Get shortcode attributes
         $atts = shortcode_atts(array(
             'button_text' => 'Sign Up Now',
-            'title' => 'Join our Exclusive Club',
+            'title' => 'Join the ' . MMC_MEMBERSHIP_CLUB_NAME,
             'description' => 'Create your account and start your membership for just $' . MMC_MEMBERSHIP_PRICE . '/month',
             'plan_id' => \get_option('square_service_default_plan_id', ''),
             'redirect_url' => ''
@@ -698,7 +698,7 @@ class MembershipSignup {
                     this.loading = false;
                 }
             }
-        }" class="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden p-6">
+        }" class="mmc-membership-form mx-auto bg-white rounded-lg shadow-md overflow-hidden p-6">
             <h2 class="text-2xl font-bold mb-4"><?php echo esc_html($atts['title']); ?></h2>
             <p class="text-gray-600 mb-6"><?php echo esc_html($atts['description']); ?></p>
             
@@ -766,12 +766,12 @@ class MembershipSignup {
                 <!-- Square Card Element -->
                 <div class="mb-6">
                     <label class="block text-gray-700 font-medium mb-2">Card Details</label>
-                    <div id="card-container" class="p-3 border rounded-md min-h-[40px] bg-gray-50"></div>
-                    <p class="text-gray-500 text-sm mt-1">Your card will be charged $8.99/month for your membership.</p>
+                    <div id="card-container" class="min-h-[40px]"></div>
+                    <p class="text-gray-500 text-sm mt-1">Your card will be charged $<?php echo MMC_MEMBERSHIP_PRICE; ?>/month for your membership.</p>
                 </div>
                 
                 <!-- Submit button -->
-                <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors" :disabled="loading || squareStatus === 'processing'">
+                <button type="submit" class="elementor-button elementor-size-md w-full" :disabled="loading || squareStatus === 'processing'">
                     <span x-show="!loading && squareStatus !== 'processing'"><?php echo esc_html($atts['button_text']); ?></span>
                     <span x-show="loading || squareStatus === 'processing'" class="inline-flex items-center">
                         <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
