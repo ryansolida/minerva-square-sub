@@ -19,9 +19,18 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Define plugin constants
-define('MMC_MEMBERSHIP_PRICE', 8.99);
-define('MMC_MEMBERSHIP_CLUB_NAME', 'Minerva Motor Club');
+// Define plugin constants with default values that can be overridden by settings
+function mmc_membership_get_club_name() {
+    return get_option('mmc_membership_club_name', 'Minerva Motor Club');
+}
+
+function mmc_membership_get_price() {
+    return (float) get_option('mmc_membership_price', 8.99);
+}
+
+// For backward compatibility, also define constants
+define('MMC_MEMBERSHIP_PRICE', mmc_membership_get_price());
+define('MMC_MEMBERSHIP_CLUB_NAME', mmc_membership_get_club_name());
 
 // Load all PHP files in the includes directory (base level only)
 $includes_dir = plugin_dir_path(__FILE__) . 'includes/';

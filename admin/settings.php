@@ -168,6 +168,8 @@ class MMCMembershipSettings {
         
         // Register membership settings
         register_setting('mmc-memberships', 'square_service_signup_page_id');
+        register_setting('mmc-memberships', 'mmc_membership_club_name');
+        register_setting('mmc-memberships', 'mmc_membership_price');
         
         // Register Constant Contact settings
         register_setting('mmc-memberships', 'mmc_membership_cc_api_key');
@@ -243,6 +245,22 @@ class MMCMembershipSettings {
             'square_service_signup_page_id',
             'Signup Page',
             array($this, 'signup_page_callback'),
+            'mmc-memberships',
+            'mmc-memberships-general'
+        );
+        
+        add_settings_field(
+            'mmc_membership_club_name',
+            'Club Name',
+            array($this, 'club_name_callback'),
+            'mmc-memberships',
+            'mmc-memberships-general'
+        );
+        
+        add_settings_field(
+            'mmc_membership_price',
+            'Membership Price',
+            array($this, 'membership_price_callback'),
             'mmc-memberships',
             'mmc-memberships-general'
         );
@@ -407,6 +425,27 @@ class MMCMembershipSettings {
         echo '</select>';
         echo '<p class="description">Select the page where you have placed the membership signup form shortcode.</p>';
         echo '<p class="description">This page will be used for "Sign Up" links throughout the site.</p>';
+    }
+    
+    /**
+     * Club name field
+     */
+    public function club_name_callback() {
+        $club_name = get_option('mmc_membership_club_name', 'Minerva Motor Club');
+        echo '<input type="text" id="mmc_membership_club_name" name="mmc_membership_club_name" value="' . esc_attr($club_name) . '" class="regular-text">';
+        echo '<p class="description">The name of your club that will be displayed throughout the membership forms.</p>';
+    }
+    
+    /**
+     * Membership price field
+     */
+    public function membership_price_callback() {
+        $price = get_option('mmc_membership_price', '8.99');
+        echo '<div class="input-group">';
+        echo '<span class="input-group-addon">$</span>';
+        echo '<input type="number" id="mmc_membership_price" name="mmc_membership_price" value="' . esc_attr($price) . '" class="regular-text" step="0.01" min="0.01">';
+        echo '</div>';
+        echo '<p class="description">The monthly price for membership (e.g., 8.99).</p>';
     }
     
     /**
