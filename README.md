@@ -92,7 +92,7 @@ To use this plugin, you'll need to create a Square Developer account and set up 
 4. Select the appropriate environment (Sandbox or Production)
 5. Save your settings
 
-**Note**: The plugin will automatically create the subscription plan in Square for you when you save the settings. You don't need to manually create a plan in the Square Dashboard.
+**Note**: After saving your settings, use the "Create Subscription Plan" button in the plugin settings to generate the subscription plan in Square based on the name and price you've configured. This eliminates the need to manually create a plan in the Square Dashboard.
 
 ## Usage
 
