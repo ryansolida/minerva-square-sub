@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 
 // Define plugin constants
 define('MMC_MEMBERSHIP_PRICE', 8.99);
-define('MMC_MEMBERSHIP_CLUB_NAME', 'Exclusive Club');
+define('MMC_MEMBERSHIP_CLUB_NAME', 'Minerva Motor Club');
 
 // Load all PHP files in the includes directory (base level only)
 $includes_dir = plugin_dir_path(__FILE__) . 'includes/';

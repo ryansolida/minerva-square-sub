@@ -28,6 +28,8 @@ class MMCMembershipSettings {
         add_action('admin_init', array($this, 'register_settings'));
         // Register AJAX handler for testing connection
         add_action('wp_ajax_square_service_test_connection', array($this, 'ajax_test_connection'));
+        // Register AJAX handler for creating a subscription plan
+        add_action('wp_ajax_mmc_membership_create_plan', array($this, 'ajax_create_subscription_plan'));
         // Register AJAX handler for testing Constant Contact connection
         add_action('wp_ajax_mmc_membership_test_cc_connection', array($this, 'ajax_test_cc_connection'));
     }
@@ -82,6 +84,50 @@ class MMCMembershipSettings {
         }
         
         wp_die(); // Required to terminate AJAX request properly
+    }
+    
+    /**
+     * AJAX handler for creating a subscription plan in Square
+     */
+    public function ajax_create_subscription_plan() {
+        // Check permissions
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+        
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'mmc-membership-create-plan-nonce')) {
+            wp_send_json_error(array('message' => 'Security check failed'));
+            return;
+        }
+        
+        try {
+            // Initialize Square service
+            require_once(plugin_dir_path(dirname(__FILE__)) . 'includes/!SquareService.php');
+            $square_service = new \MMCMembership\SquareService();
+            
+            // Create the subscription plan
+            $result = $square_service->ensureMonthlyMembershipPlanExists();
+            
+            if ($result && isset($result['plan_variation_id'])) {
+                // Update the option with the new plan variation ID
+                update_option('square_service_default_plan_id', $result['plan_variation_id']);
+                
+                // Determine message based on status
+                $message = ($result['status'] === 'exists') 
+                    ? 'Existing subscription plan found and selected!' 
+                    : 'Subscription plan created successfully!';
+                
+                wp_send_json_success(array(
+                    'message' => $message,
+                    'plan_id' => $result['plan_variation_id']
+                ));
+            } else {
+                wp_send_json_error(array('message' => 'Failed to create subscription plan. Please check Square API settings.'));
+            }
+        } catch (\Exception $e) {
+            wp_send_json_error(array('message' => 'Error: ' . $e->getMessage()));
+        }
     }
     
     /**
@@ -259,6 +305,46 @@ class MMCMembershipSettings {
         $plan_id = get_option('square_service_default_plan_id');
         echo '<input type="text" id="square_service_default_plan_id" name="square_service_default_plan_id" value="' . esc_attr($plan_id) . '" class="regular-text">';
         echo '<p class="description">Your default Square subscription plan ID. Will be used when no plan_id is specified in the shortcode.</p>';
+        
+        // Add button to create plan if it doesn't exist
+        echo '<div style="margin-top: 10px;">';
+        echo '<button type="button" id="create-square-plan" class="button button-secondary">Create Subscription Plan in Square</button>';
+        echo '<span id="create-plan-status" style="margin-left: 10px; display: none;"></span>';
+        echo '</div>';
+        
+        // Add JavaScript to handle the button click
+        ?>
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            $('#create-square-plan').on('click', function() {
+                // Show loading status
+                $('#create-plan-status').html('<span style="color: #666;"><img src="<?php echo admin_url('images/spinner.gif'); ?>" style="vertical-align: middle;"> Creating plan...</span>').show();
+                
+                // Send AJAX request
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'mmc_membership_create_plan',
+                        nonce: '<?php echo wp_create_nonce('mmc-membership-create-plan-nonce'); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Update the plan ID field with the new ID
+                            $('#square_service_default_plan_id').val(response.data.plan_id);
+                            $('#create-plan-status').html('<span style="color: green;">✓ ' + response.data.message + '</span>');
+                        } else {
+                            $('#create-plan-status').html('<span style="color: red;">✗ ' + response.data.message + '</span>');
+                        }
+                    },
+                    error: function() {
+                        $('#create-plan-status').html('<span style="color: red;">✗ Error connecting to server</span>');
+                    }
+                });
+            });
+        });
+        </script>
+        <?php
     }
     
     /**
