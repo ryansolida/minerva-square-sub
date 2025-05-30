@@ -78,28 +78,21 @@ To use this plugin, you'll need to create a Square Developer account and set up 
 3. Enter your website domain (e.g., `yourdomain.com`)
 4. Click "Save"
 
-#### 5. Create a Subscription Plan
-
-1. Log in to your [Square Dashboard](https://squareup.com/dashboard/)
-2. Navigate to "Items" > "Subscriptions"
-3. Click "Create Subscription Plan"
-4. Fill in the details for your membership plan:
-   - Name (e.g., "Monthly Membership")
-   - Price
-   - Billing frequency
-5. Save the plan
-6. Copy the Plan ID (you'll need this for the plugin configuration)
-
-#### 6. Configure the Plugin
+#### 5. Configure the Plugin
 
 1. In your WordPress admin, go to "MMC Memberships" settings
 2. Enter the credentials you obtained from Square:
    - Application ID
    - Access Token
    - Location ID
-   - Default Plan ID
-3. Select the appropriate environment (Sandbox or Production)
-4. Save your settings
+3. Enter your membership details:
+   - Club name
+   - Membership price
+   - Billing frequency
+4. Select the appropriate environment (Sandbox or Production)
+5. Save your settings
+
+**Note**: The plugin will automatically create the subscription plan in Square for you when you save the settings. You don't need to manually create a plan in the Square Dashboard.
 
 ## Usage
 
