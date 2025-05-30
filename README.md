@@ -1,6 +1,6 @@
 # MMC Membership Plugin for WordPress
 
-A comprehensive WordPress membership plugin that integrates with Square for payment processing. This plugin allows you to create a complete membership system with user registration, subscription management, and members-only content protection.
+A comprehensive WordPress membership plugin that integrates with Square for payment processing. This plugin is designed to be used as a Must-Use Plugin (mu-plugin) and allows you to create a complete membership system with user registration, subscription management, and members-only content protection.
 
 ## Features
 
@@ -14,10 +14,22 @@ A comprehensive WordPress membership plugin that integrates with Square for paym
 
 ## Installation
 
+This plugin is designed to be used as a Must-Use Plugin (mu-plugin) for WordPress:
+
 1. Download or clone this repository
-2. Upload the entire `mmc-membership` directory to the `/wp-content/plugins/` directory
-3. Activate the plugin through the 'Plugins' menu in WordPress
-4. Configure your settings in the MMC Memberships admin menu
+2. Upload the entire `mmc-membership` directory to the `/wp-content/mu-plugins/` directory
+3. If the `mu-plugins` directory doesn't exist, create it
+4. Create a loader file in your `mu-plugins` directory (if not already present):
+
+```php
+<?php
+// mu-plugins loader
+require_once __DIR__ . '/mmc-membership/mmc-membership.php';
+```
+
+5. Configure your settings in the MMC Memberships admin menu
+
+**Note**: As a Must-Use Plugin, it will be automatically activated and cannot be deactivated through the WordPress admin interface. This ensures the membership functionality is always available.
 
 ## Configuration
 
@@ -30,6 +42,64 @@ After installation, go to MMC Memberships in your WordPress admin area to config
 5. Environment (Sandbox or Production)
 6. Membership pages (Signup, Login, Account)
 7. Club name and membership price
+
+### Setting Up Square Credentials
+
+To use this plugin, you'll need to create a Square Developer account and set up an application. Follow these steps:
+
+#### 1. Create a Square Developer Account
+
+1. Go to the [Square Developer Portal](https://developer.squareup.com/)
+2. Click "Sign Up" and create an account (or sign in if you already have one)
+3. Accept the developer terms of service
+
+#### 2. Create a New Application
+
+1. From the Square Developer Dashboard, click "Create Your First Application"
+2. Enter a name for your application (e.g., "My Website Membership")
+3. Select the "Production" or "Sandbox" environment
+   - **Sandbox**: Use for testing (doesn't process real payments)
+   - **Production**: Use for live payments
+4. Click "Create Application"
+
+#### 3. Get Your Credentials
+
+1. Once your application is created, you'll be taken to the application dashboard
+2. In the left sidebar, click on "Credentials"
+3. You'll find the following credentials:
+   - **Application ID**: Used to identify your application
+   - **Access Token**: Used to authenticate API requests
+   - **Location ID**: Needed for subscription processing
+
+#### 4. Set Up Web Payments
+
+1. In the left sidebar, click on "Web Payments"
+2. Click "Add Web Location"
+3. Enter your website domain (e.g., `yourdomain.com`)
+4. Click "Save"
+
+#### 5. Create a Subscription Plan
+
+1. Log in to your [Square Dashboard](https://squareup.com/dashboard/)
+2. Navigate to "Items" > "Subscriptions"
+3. Click "Create Subscription Plan"
+4. Fill in the details for your membership plan:
+   - Name (e.g., "Monthly Membership")
+   - Price
+   - Billing frequency
+5. Save the plan
+6. Copy the Plan ID (you'll need this for the plugin configuration)
+
+#### 6. Configure the Plugin
+
+1. In your WordPress admin, go to "MMC Memberships" settings
+2. Enter the credentials you obtained from Square:
+   - Application ID
+   - Access Token
+   - Location ID
+   - Default Plan ID
+3. Select the appropriate environment (Sandbox or Production)
+4. Save your settings
 
 ## Usage
 
@@ -54,7 +124,7 @@ The plugin provides several shortcodes to display membership-related content:
 You can restrict content to members only in two ways:
 
 1. Using the shortcode: `[members_only]Your exclusive content here[/members_only]`
-2. Using the meta box in the post/page editor to mark entire posts/pages as members-only
+2. Making a whole page members-only by checking the "Members Only" box in the page editor sidebar. This restricts the entire page to members only.
 
 ### Elementor Integration
 
