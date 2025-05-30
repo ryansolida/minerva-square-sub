@@ -1,104 +1,102 @@
-# Square Service for WordPress
+# MMC Membership Plugin for WordPress
 
-A standalone WordPress plugin that provides Square API integration without requiring Composer. This package includes bundled versions of the Square SDK and Guzzle HTTP client.
+A comprehensive WordPress membership plugin that integrates with Square for payment processing. This plugin allows you to create a complete membership system with user registration, subscription management, and members-only content protection.
+
+## Features
+
+- **User Registration & Login**: Allow users to register and create accounts with integrated payment processing
+- **Subscription Management**: Create and manage Square-based subscriptions for your members
+- **Account Management**: Users can update their profile information, change passwords, and manage their membership
+- **Members-Only Content**: Restrict content to active members only
+- **Elementor Integration**: Dynamic tags for displaying membership information in Elementor templates
+- **Square Payment Processing**: Secure payment processing using Square's Web Payments SDK
 
 ## Installation
 
-To use this as a standard WordPress plugin:
-
 1. Download or clone this repository
-2. Upload the entire `square-service-wp` directory to the `/wp-content/plugins/` directory
+2. Upload the entire `mmc-membership` directory to the `/wp-content/plugins/` directory
 3. Activate the plugin through the 'Plugins' menu in WordPress
-4. Configure your Square API credentials in Settings > Square Service
-
-To use as a Must-Use Plugin (mu-plugin):
-
-1. Download or clone this repository
-2. Copy the entire `square-service-wp` directory to the `/wp-content/mu-plugins/` directory
-3. Create a loader file in your mu-plugins directory (if not already present):
-
-```php
-<?php
-// mu-plugins loader
-require_once __DIR__ . '/square-service-wp/square-service.php';
-```
-
-4. Configure your Square API credentials in Settings > Square Service
+4. Configure your settings in the MMC Memberships admin menu
 
 ## Configuration
 
-After installation, go to Settings > Square Service in your WordPress admin area to configure:
+After installation, go to MMC Memberships in your WordPress admin area to configure:
 
 1. Square API Access Token
-2. Square Location ID (required for subscriptions)
-3. Environment (Sandbox or Production)
+2. Square Application ID
+3. Square Location ID
+4. Default Plan ID
+5. Environment (Sandbox or Production)
+6. Membership pages (Signup, Login, Account)
+7. Club name and membership price
 
 ## Usage
 
-### Basic Usage
+### Shortcodes
 
-The plugin provides global functions to access the Square Service:
+The plugin provides several shortcodes to display membership-related content:
 
-```php
-// Get an instance of the SquareService with default credentials
-$squareService = get_square_service();
+- `[mmc_membership_page]`: Displays different content based on user's login and membership status
+- `[mmc_my_account]`: Displays the user account management page
+- `[mmc_new_user_signup_form]`: Displays a registration form with integrated payment
+- `[members_only]`: Restricts content to active members only
 
-// Get an instance with custom credentials
-$squareService = get_square_service('your-access-token');
+### Members-Only Content
 
-// Create a customer
-$customer = $squareService->createCustomer([
-    'name' => 'John Doe',
-    'email' => 'john@example.com'
-]);
+You can restrict content to members only in two ways:
 
-// Get the customer ID
-$customerId = $customer->id;
-```
+1. Using the shortcode: `[members_only]Your exclusive content here[/members_only]`
+2. Using the meta box in the post/page editor to mark entire posts/pages as members-only
 
-### Credit Card Management
+### Elementor Integration
 
-```php
-// Add a card to a customer (with a card token from Square.js)
-$card = $squareService->addCardToCustomer($customerId, $cardToken);
+The plugin includes several dynamic tags for Elementor:
 
-// Get all customer cards
-$cards = $squareService->getCustomerCards($customerId);
+- Membership Status
+- Next Billing Date
+- Next Billing Price
+- Payment Card Info
+- Has Active Membership
+- Membership Expiration Date
+- Membership Activation Date
 
-// Delete a card
-$squareService->deleteCustomerCard($customerId, $cardId);
-```
+### PHP API
 
-### Subscription Management
+For developers, the plugin provides a comprehensive API to interact with the membership system:
 
 ```php
-// Ensure the monthly membership plan exists
-$plan = $squareService->ensureMonthlyMembershipPlanExists();
+// Get the Square service instance
+$square_service = new \MMCMembership\SquareService();
 
-// Create a subscription
-$subscription = $squareService->createSubscription(
-    $customerId, 
-    $cardId, 
-    $plan['plan_variation_id']
-);
+// Check if user has active membership
+$has_membership = \MMCMembership\UserFunctions::has_active_membership();
 
-// Cancel a subscription
-$squareService->cancelSubscription($subscriptionId);
+// Get membership signup URL
+$signup_url = get_membership_signup_url();
+
+// Get subscription data
+$subscription_id = get_user_meta(get_current_user_id(), 'square_subscription_id', true);
+$subscription = $square_service->getSubscription($subscription_id);
 ```
 
 ## Customization
 
-The SquareService class includes configurable properties for the subscription plan:
+The plugin is designed to be customizable through WordPress actions and filters. You can also extend the core classes to add custom functionality.
 
-```php
-protected $subscriptionPlanName = 'Exclusive Club Plan';
-protected $subscriptionPlanId = 'ExclusiveClubPlan';
-protected $subscriptionVariationName = 'Exclusive Club';
-protected $subscriptionPrice = 8.99;
-protected $subscriptionCurrency = 'USD';
-```
+### CSS Customization
 
-To customize these, extend the SquareService class and override these properties.
+The plugin includes CSS for styling the account page, membership forms, and restricted content messages. You can override these styles in your theme's CSS or use the WordPress Customizer.
+
+### Template Customization
+
+The plugin uses output buffering to generate HTML, making it easy to modify the output using WordPress filters. For advanced customization, you can copy the plugin files to your theme and modify them directly.
+
+## Requirements
+
+- WordPress 5.0 or higher
+- PHP 7.2 or higher
+- Square Developer Account
+- SSL Certificate (required for Square payments)
 
 ## Dependencies
 
